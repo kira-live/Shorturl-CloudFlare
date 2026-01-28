@@ -7,6 +7,8 @@
 	"name": "shorturl-cf",
 	"main": "./src/worker/index.ts",
 	"compatibility_date": "2026-01-15",
+	"workers_dev": false,
+	"preview_urls" : false,
 	"compatibility_flags": [
 		"nodejs_compat"
 	],
@@ -28,7 +30,7 @@
 		{
 			"binding": "shorturl",
 			"database_name": "shorturl",
-			"database_id": "44642188-0e60-4eeb-976d-43e0974db97d"
+			"database_id": "712bf321-7e05-4bea-98d2-899cbc0d7c11"
 		}
 	]
 	/**

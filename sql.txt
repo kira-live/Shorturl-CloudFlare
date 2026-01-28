@@ -1,0 +1,160 @@
+CREATE TABLE IF NOT EXISTS users (
+  id              INTEGER PRIMARY KEY AUTOINCREMENT, -- 建议 UUID
+  email           TEXT,                          -- 可选：邮箱登录
+  username        TEXT,                          -- 可选：用户名
+  password_hash   TEXT,                          -- 若支持密码登录
+  role            TEXT NOT NULL DEFAULT 'user',   -- user/admin 等
+  status          INTEGER NOT NULL DEFAULT 0,     -- 0=正常 1=禁用
+  deleted_at      INTEGER,                         -- 软删除时间；NULL=未删除
+  created_at      INTEGER NOT NULL,              -- unix seconds
+  updated_at      INTEGER NOT NULL
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username ON users(username);
+CREATE INDEX IF NOT EXISTS idx_users_status ON users(status);
+CREATE TABLE IF NOT EXISTS api_tokens (
+  id              INTEGER PRIMARY KEY AUTOINCREMENT, -- UUID
+  user_id         INTEGER NOT NULL,             -- 不建外键
+  name            TEXT,                        -- 便于用户区分用途
+  token_hash      TEXT NOT NULL,               -- 仅存 hash
+  scopes          TEXT,                        -- JSON/CSV：如 "links:rw,stats:r"
+  status          INTEGER NOT NULL DEFAULT 0,   -- 0=启用 1=禁用
+  last_used_at    INTEGER,                     -- unix seconds
+  expires_at      INTEGER,                     -- unix seconds, NULL=永不过期
+  created_at      INTEGER NOT NULL
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_api_tokens_token_hash ON api_tokens(token_hash);
+CREATE INDEX IF NOT EXISTS idx_api_tokens_user_id ON api_tokens(user_id);
+CREATE INDEX IF NOT EXISTS idx_api_tokens_status ON api_tokens(status);
+CREATE INDEX IF NOT EXISTS idx_api_tokens_expires_at ON api_tokens(expires_at);
+CREATE TABLE IF NOT EXISTS domains (
+  id              INTEGER PRIMARY KEY AUTOINCREMENT, -- UUID
+  host            TEXT NOT NULL,                 -- 如 "s.example.com"
+  is_active       INTEGER NOT NULL DEFAULT 0,    -- 0=启用 1=停用
+  is_default      INTEGER NOT NULL DEFAULT 0,    -- 1=默认域名
+  notes           TEXT,
+  created_at      INTEGER NOT NULL,
+  updated_at      INTEGER NOT NULL
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_domains_host ON domains(host);
+CREATE INDEX IF NOT EXISTS idx_domains_active ON domains(is_active);
+CREATE INDEX IF NOT EXISTS idx_domains_default ON domains(is_default);
+CREATE TABLE IF NOT EXISTS redirect_templates (
+  id              INTEGER PRIMARY KEY AUTOINCREMENT, -- UUID
+  name            TEXT NOT NULL,                     -- 模板名
+  html_content    TEXT NOT NULL,                     -- 完整 HTML
+  is_active       INTEGER NOT NULL DEFAULT 1,        -- 1启用，0禁用
+  created_by      INTEGER,                           -- user_id（不建外键）
+  created_at      INTEGER NOT NULL,
+  updated_at      INTEGER NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_redirect_templates_active ON redirect_templates(is_active);
+CREATE INDEX IF NOT EXISTS idx_redirect_templates_created_by ON redirect_templates(created_by);
+CREATE TABLE IF NOT EXISTS short_links (
+  id                 INTEGER PRIMARY KEY AUTOINCREMENT, -- UUID
+  domain_id          INTEGER NOT NULL,                  -- domains.id（无外键）
+  code               TEXT NOT NULL,                     -- 短码（可自定义）
+  target_url         TEXT NOT NULL,                     -- 目标地址（可编辑）
+  owner_user_id      INTEGER NOT NULL,                  -- users.id（无外键）
+
+  redirect_http_code INTEGER NOT NULL DEFAULT 302,      -- 301/302/307/308 等
+  use_interstitial   INTEGER NOT NULL DEFAULT 0,        -- 是否中转页
+  template_id        INTEGER,                           -- redirect_templates.id（无外键）
+
+  password_hash     TEXT,                             -- 若启用密码访问则存 hash
+  max_visits        INTEGER,                          -- 访问次数限制；NULL=无限
+  expire_at         INTEGER,                          -- 过期时间；NULL=不过期
+
+  is_disabled       INTEGER NOT NULL DEFAULT 0,        -- 禁用（逻辑）
+  deleted_at        INTEGER,                          -- 软删除时间；NULL=未删除
+
+  remark            TEXT,                             -- 备注
+
+  created_at        INTEGER NOT NULL,
+  updated_at        INTEGER NOT NULL,
+
+  -- 冗余统计（快速查询用；详细统计在事件表）
+  total_clicks      INTEGER NOT NULL DEFAULT 0,
+  last_access_at    INTEGER
+);
+
+-- 同一域名下短码唯一（支持自定义短码）
+CREATE UNIQUE INDEX IF NOT EXISTS idx_short_links_domain_code
+  ON short_links(domain_id, code);
+
+CREATE INDEX IF NOT EXISTS idx_short_links_owner ON short_links(owner_user_id);
+CREATE INDEX IF NOT EXISTS idx_short_links_deleted ON short_links(deleted_at);
+CREATE INDEX IF NOT EXISTS idx_short_links_disabled ON short_links(is_disabled);
+CREATE INDEX IF NOT EXISTS idx_short_links_expire_at ON short_links(expire_at);
+CREATE INDEX IF NOT EXISTS idx_short_links_template ON short_links(template_id);
+CREATE INDEX IF NOT EXISTS idx_short_links_last_access ON short_links(last_access_at);
+CREATE TABLE IF NOT EXISTS tags (
+  id            INTEGER PRIMARY KEY AUTOINCREMENT, -- UUID
+  name          TEXT NOT NULL,                     -- 标签名（全局唯一）
+  created_at    INTEGER NOT NULL
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_tags_name ON tags(name);
+CREATE TABLE IF NOT EXISTS short_link_tags (
+  id            INTEGER PRIMARY KEY AUTOINCREMENT, -- UUID
+  short_link_id INTEGER NOT NULL,                  -- short_links.id（无外键）
+  tag_id        INTEGER NOT NULL,                  -- tags.id（无外键）
+  created_at    INTEGER NOT NULL
+);
+
+-- 防止重复打同一个标签
+CREATE UNIQUE INDEX IF NOT EXISTS idx_slt_unique
+  ON short_link_tags(short_link_id, tag_id);
+
+CREATE INDEX IF NOT EXISTS idx_slt_short_link ON short_link_tags(short_link_id);
+CREATE INDEX IF NOT EXISTS idx_slt_tag ON short_link_tags(tag_id);
+CREATE TABLE IF NOT EXISTS link_visit_events (
+  id              INTEGER PRIMARY KEY AUTOINCREMENT, -- UUID
+  short_link_id   INTEGER NOT NULL,                  -- short_links.id（无外键）
+  domain_id       INTEGER NOT NULL,                  -- domains.id（无外键，便于按域过滤）
+  code            TEXT NOT NULL,                     -- 冗余保存，便于排查/归档
+  visited_at      INTEGER NOT NULL,          -- unix seconds
+
+  -- 访问上下文（按需增删）
+  ip              TEXT,                      -- IP地址
+  ua              TEXT,                      -- user-agent
+  referer         TEXT,
+  country         TEXT,                      -- e.g. "CN"
+  region          TEXT,
+  city            TEXT,
+  device_type     TEXT,                      -- mobile/desktop/bot/...
+  os              TEXT,
+  browser         TEXT,
+
+  -- 访问结果
+  is_blocked      INTEGER NOT NULL DEFAULT 0, -- 因禁用/过期/次数限制/密码失败等
+  block_reason    TEXT,                       -- disabled/deleted/expired/limit/password/...
+  http_status     INTEGER                     -- 实际返回状态码
+);
+
+CREATE INDEX IF NOT EXISTS idx_lve_link_time ON link_visit_events(short_link_id, visited_at);
+CREATE INDEX IF NOT EXISTS idx_lve_time ON link_visit_events(visited_at);
+CREATE INDEX IF NOT EXISTS idx_lve_domain_code_time ON link_visit_events(domain_id, code, visited_at);
+CREATE INDEX IF NOT EXISTS idx_lve_country ON link_visit_events(country);
+CREATE INDEX IF NOT EXISTS idx_lve_blocked ON link_visit_events(is_blocked);
+CREATE TABLE IF NOT EXISTS link_visit_stats_daily (
+  id              INTEGER PRIMARY KEY AUTOINCREMENT, -- UUID
+  short_link_id   INTEGER NOT NULL,                  -- short_links.id（无外键）
+  day             TEXT NOT NULL,             -- "YYYY-MM-DD"
+  clicks          INTEGER NOT NULL DEFAULT 0,
+  blocked         INTEGER NOT NULL DEFAULT 0,
+  unique_ips      INTEGER NOT NULL DEFAULT 0, -- 若你在应用层做去重统计
+  unique_users    INTEGER NOT NULL DEFAULT 0  -- 可选：若有登录态/指纹
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_lvsd_unique ON link_visit_stats_daily(short_link_id, day);
+CREATE INDEX IF NOT EXISTS idx_lvsd_day ON link_visit_stats_daily(day);
+CREATE TABLE IF NOT EXISTS app_settings (
+  key         TEXT PRIMARY KEY,
+  value       TEXT NOT NULL,
+  updated_at  INTEGER NOT NULL
+);

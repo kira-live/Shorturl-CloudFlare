@@ -1,7 +1,15 @@
 import { Hono } from "hono";
+import auth, {authVerify} from "./auth";
+import {ErrorCode, HttpResponseJsonBody} from "./util";
+import redirect from "./redirect";
 const app = new Hono<{ Bindings: Env }>();
-
-app.get("/api/", (c) => c.json({ name: "Cloudflare" }));
+app.use(authVerify)
+app.onError((err, c) => {
+    console.error(`${err}`)
+    const response:HttpResponseJsonBody = {message:'something went wrong!',code:ErrorCode.UNKNOWN_ERROR};
+    return c.json(response, 500)
+})
+app.route('/api/auth/',auth)
 app.get("/",(c)=> c.redirect("/"+__WEB_LOCATION__+"/"));
 app.get("/"+__WEB_LOCATION__+"/*", async  (c)=>
 {
@@ -15,6 +23,6 @@ app.get("/"+__WEB_LOCATION__+"/*", async  (c)=>
     }
     return resp;
 });
-app.get("*", (c) => c.json({ message: "all" }));
+app.route('/', redirect);
 
 export default app;
