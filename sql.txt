@@ -81,7 +81,7 @@ CREATE TABLE IF NOT EXISTS short_links (
   error_template_id    INTEGER,                         -- 错误页模板 redirect_templates.id
   password_template_id INTEGER,                         -- 密码验证页模板 redirect_templates.id
 
-  password_hash     TEXT,                             -- 若启用密码访问则存 hash
+  password          TEXT,                             -- 若启用密码访问则存，这里存储明文
   max_visits        INTEGER,                          -- 访问次数限制；NULL=无限
   expire_at         INTEGER,                          -- 过期时间；NULL=不过期
 
