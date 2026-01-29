@@ -174,7 +174,22 @@ app.get("/:code/:password",async (c)=>{
         c.executionCtx.waitUntil(
             recordVisitEvent(c.env.shorturl, { ...baseEvent, is_blocked: 1, block_reason: "password_wrong", http_status: 401 })
         );
-        return c.text("Password incorrect", 401);
+        
+        // 密码错误，返回密码页面并标记 errorpassword 为 true
+        const passwordTemplateId = result.password_template_id ?? result.domain_password_template_id;
+        if (passwordTemplateId) {
+            const template = await c.env.shorturl
+                .prepare("SELECT html_content FROM redirect_templates WHERE id = ? AND is_active = 1")
+                .bind(passwordTemplateId)
+                .first<{ html_content: string }>();
+
+            if (template) {
+                const html = template.html_content.replace(/\{\{errorpassword\}\}/g, "true");
+                return c.html(html, 200);
+            }
+        }
+        
+        return c.text("server error", 500);
     }
 
     // 记录成功访问事件 + 更新统计
@@ -298,10 +313,12 @@ app.get("/:code", async (c) => {
                 c.executionCtx.waitUntil(
                     recordVisitEvent(c.env.shorturl, { ...baseEvent, is_blocked: 1, block_reason: "password", http_status: 401 })
                 );
-
-                return c.html(template.html_content, 200);
+                    
+                    // 首次访问，密码错误标记为 false
+                    const html = template.html_content.replace(/\{\{errorpassword\}\}/g, "false");
+                    return c.html(html, 200);
+                }
             }
-        }
 
         c.executionCtx.waitUntil(
             recordVisitEvent(c.env.shorturl, { ...baseEvent, is_blocked: 1, block_reason: "password", http_status: 401 })
