@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import auth, {authVerify} from "./auth";
 import {ErrorCode, HttpResponseJsonBody} from "./util";
 import redirect from "./redirect";
+import assest from "./assest";
 const app = new Hono<{ Bindings: Env }>();
 app.use(authVerify)
 app.onError((err, c) => {
@@ -23,6 +24,7 @@ app.get("/"+__WEB_LOCATION__+"/*", async  (c)=>
     }
     return resp;
 });
+app.route('/assest/',assest);
 app.route('/', redirect);
 
 export default app;

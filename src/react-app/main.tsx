@@ -4,6 +4,6 @@ import "./index.css";
 
 createRoot(document.getElementById("root")!).render(
 	<StrictMode>
-		<button className={"btn btn-primary"}>Click Me</button>
+		<button className={"btn btn-primary"}>Click Me1</button>
 	</StrictMode>,
 );

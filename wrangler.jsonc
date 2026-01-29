@@ -8,7 +8,7 @@
 	"main": "./src/worker/index.ts",
 	"compatibility_date": "2026-01-15",
 	"workers_dev": false,
-	"preview_urls" : false,
+	"preview_urls": false,
 	"compatibility_flags": [
 		"nodejs_compat"
 	],
@@ -30,9 +30,15 @@
 		{
 			"binding": "shorturl",
 			"database_name": "shorturl",
-			"database_id": "e77ea5c7-b5c5-449b-8ad8-ba7ca4ccd38b"
+			"database_id": "94d91b1a-d644-40fd-9b2b-cf358413d412"
 		}
-	]
+	],
+	"r2_buckets": [
+		{
+			"binding": "R2_BUCKET",
+			"bucket_name": "shorturl"
+		}
+		]
 	/**
 	 * Smart Placement
 	 * https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement

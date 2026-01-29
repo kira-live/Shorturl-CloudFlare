@@ -9,6 +9,7 @@ declare namespace Cloudflare {
 		shorturl: D1Database;
 		ASSETS: Fetcher;
 		JWT_SECRET: "12345";
+        R2_BUCKET?: R2Bucket;
 	}
 }
 interface Env extends Cloudflare.Env {}

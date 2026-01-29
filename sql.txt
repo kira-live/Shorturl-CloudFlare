@@ -180,13 +180,17 @@ CREATE TABLE IF NOT EXISTS app_settings (
 CREATE TABLE IF NOT EXISTS template_assets (
   id              INTEGER PRIMARY KEY AUTOINCREMENT,
   template_id     INTEGER NOT NULL,                  -- redirect_templates.id（无外键）
-  
+  asset_prefix    TEXT,                              -- 资源路径前缀（随机字符串，如 "a3f8x9k2"），用于隔离和防枚举
   -- 文件信息
   filename        TEXT NOT NULL,                     -- 原始文件名，如 "logo.png"
-  r2_key          TEXT NOT NULL,                     -- R2 对象键，如 "templates/a3f8x9k2/logo.png"
   content_type    TEXT,                              -- MIME 类型，如 "image/png"
   size            INTEGER,                           -- 文件大小（字节）
   checksum        TEXT,                              -- 文件哈希（用于去重/校验）
+  
+  -- 存储方式（二选一）
+  storage_type    INTEGER NOT NULL DEFAULT 0,        -- 0=数据库存储, 1=R2存储
+  content         BLOB,                              -- 文件内容（storage_type=0 时使用）
+  r2_key          TEXT,                              -- R2 对象键（storage_type=1 时使用）
   
   -- 元数据
   alt_text        TEXT,                              -- 可选：图片 alt 文本
@@ -196,16 +200,19 @@ CREATE TABLE IF NOT EXISTS template_assets (
 );
 
 -- 同一模板下文件名唯一
-CREATE UNIQUE INDEX IF NOT EXISTS idx_template_assets_tpl_filename 
+CREATE UNIQUE INDEX IF NOT EXISTS idx_template_assets_tpl_filename
   ON template_assets(template_id, filename);
 
 -- R2 key 全局唯一
 CREATE UNIQUE INDEX IF NOT EXISTS idx_template_assets_r2_key 
   ON template_assets(r2_key);
 
-CREATE INDEX IF NOT EXISTS idx_template_assets_template 
+CREATE INDEX IF NOT EXISTS idx_template_assets_template
   ON template_assets(template_id);
 
-CREATE INDEX IF NOT EXISTS idx_template_assets_checksum 
+CREATE INDEX IF NOT EXISTS idx_template_assets_checksum
   ON template_assets(checksum);
+
+CREATE INDEX IF NOT EXISTS idx_template_assets_storage_type
+  ON template_assets(storage_type);
 
