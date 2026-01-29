@@ -176,3 +176,36 @@ CREATE TABLE IF NOT EXISTS app_settings (
   value       TEXT NOT NULL,
   updated_at  INTEGER NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS template_assets (
+  id              INTEGER PRIMARY KEY AUTOINCREMENT,
+  template_id     INTEGER NOT NULL,                  -- redirect_templates.id（无外键）
+  
+  -- 文件信息
+  filename        TEXT NOT NULL,                     -- 原始文件名，如 "logo.png"
+  r2_key          TEXT NOT NULL,                     -- R2 对象键，如 "templates/a3f8x9k2/logo.png"
+  content_type    TEXT,                              -- MIME 类型，如 "image/png"
+  size            INTEGER,                           -- 文件大小（字节）
+  checksum        TEXT,                              -- 文件哈希（用于去重/校验）
+  
+  -- 元数据
+  alt_text        TEXT,                              -- 可选：图片 alt 文本
+  
+  created_at      INTEGER NOT NULL,
+  updated_at      INTEGER NOT NULL
+);
+
+-- 同一模板下文件名唯一
+CREATE UNIQUE INDEX IF NOT EXISTS idx_template_assets_tpl_filename 
+  ON template_assets(template_id, filename);
+
+-- R2 key 全局唯一
+CREATE UNIQUE INDEX IF NOT EXISTS idx_template_assets_r2_key 
+  ON template_assets(r2_key);
+
+CREATE INDEX IF NOT EXISTS idx_template_assets_template 
+  ON template_assets(template_id);
+
+CREATE INDEX IF NOT EXISTS idx_template_assets_checksum 
+  ON template_assets(checksum);
+

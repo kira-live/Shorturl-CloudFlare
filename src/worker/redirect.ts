@@ -94,11 +94,11 @@ async function recordVisitEvent(db: D1Database, event: VisitEventData) {
 }
 
 app.get("/:code", async (c) => {
-    console.log("in code!")
+    c.header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+    c.header("Pragma", "no-cache");
+    c.header("Expires", "0");
     const code = c.req.param("code");
-
     const host = c.req.header("host") || "";
-    console.log("code:"+code+",host:"+host);
     const now = Math.floor(Date.now() / 1000);
 
     // 获取访问上下文信息
