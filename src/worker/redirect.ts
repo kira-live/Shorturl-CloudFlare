@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { UAParser } from 'ua-parser-js';
-
+import { ErrorCode } from "./util";
 const app = new Hono<{ Bindings: Env }>();
 
 interface ShortLink {
@@ -18,7 +18,9 @@ interface ShortLink {
     deleted_at: number | null;
     total_clicks: number;
     password_template_id: number | null;       // 短链接级别的密码模板
+    error_template_id: number | null;          // 短链接级别的错误模板
     domain_password_template_id: number | null; // 域名级别的密码模板
+    domain_error_template_id: number | null;    // 域名级别的错误模板
 }
 
 interface VisitEventData {
@@ -163,7 +165,7 @@ function parseUserAgent(ua: string | null): { device_type: string; os: string; b
 async function recordVisitEvent(db: D1Database, event: VisitEventData) {
     await db
         .prepare(`
-            INSERT INTO link_visit_events 
+            INSERT INTO link_visit_events
             (short_link_id, domain_id, code, visited_at, ip, ua, referer, country, region, city, device_type, os, browser, is_blocked, block_reason, http_status)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `)
@@ -186,6 +188,44 @@ async function recordVisitEvent(db: D1Database, event: VisitEventData) {
             event.http_status
         )
         .run();
+}
+
+/**
+ * 获取错误页面 HTML
+ * @param db 数据库连接
+ * @param r2Bucket R2 存储桶
+ * @param host 域名
+ * @param shortLink 短链接信息（如果存在）
+ * @param replacements 模板替换变量
+ * @returns HTML 字符串，如果没有配置模板则返回 null
+ */
+async function getErrorPageHtml(
+    db: D1Database,
+    r2Bucket: R2Bucket | undefined,
+    host: string,
+    shortLink: ShortLink | null,
+    replacements: Record<string, string>
+): Promise<string | null> {
+    let templateId: number | null = null;
+
+    if (shortLink) {
+        // 有短链接：优先使用短链接模板，其次域名模板
+        templateId = shortLink.error_template_id ?? shortLink.domain_error_template_id;
+    } else {
+        // 没有短链接：只能查询域名模板
+        const domain = await db
+            .prepare(`SELECT error_template_id FROM domains WHERE host = ? AND is_active = 1`)
+            .bind(host)
+            .first<{ error_template_id: number | null }>();
+        templateId = domain?.error_template_id ?? null;
+    }
+
+    if (!templateId) {
+        return null;
+    }
+
+    const templateResult = await getTemplateContent(db, templateId, replacements, r2Bucket);
+    return templateResult?.html ?? null;
 }
 
 app.get("/:code", async (c) => {
@@ -215,19 +255,26 @@ app.get("/:code", async (c) => {
     // 查询短链接（需要同时匹配域名和短码）
     const result = await c.env.shorturl
         .prepare(`
-            SELECT sl.*, d.host as domain_host, d.password_template_id as domain_password_template_id
-            FROM short_links sl
-            JOIN domains d ON sl.domain_id = d.id
-            WHERE sl.code = ? AND d.host = ?
-              AND sl.deleted_at IS NULL
-              AND sl.is_disabled = 0
-              AND d.is_active = 1
-        `)
+                SELECT sl.*, 
+                       d.host as domain_host, 
+                       d.password_template_id as domain_password_template_id,
+                       d.error_template_id as domain_error_template_id
+                FROM short_links sl
+                JOIN domains d ON sl.domain_id = d.id
+                WHERE sl.code = ? AND d.host = ?
+                  AND sl.deleted_at IS NULL
+                  AND sl.is_disabled = 0
+                  AND d.is_active = 1
+            `)
         .bind(code, host)
         .first<ShortLink & { domain_host: string }>();
 
     if (!result) {
-        return c.json("no short url");
+        const html = await getErrorPageHtml(
+            c.env.shorturl, c.env.R2_BUCKET, host, null,
+            { error_message: "Short link not found", error_code: String(ErrorCode.SHORTURL_NOT_FOUND), http_status: "404", code }
+        );
+        return html ? c.html(html, 404) : c.json({ error: "not_found", message: "Short link not found" }, 404);
     }
 
     // 基础事件数据
@@ -255,7 +302,11 @@ app.get("/:code", async (c) => {
         c.executionCtx.waitUntil(
             recordVisitEvent(c.env.shorturl, { ...baseEvent, is_blocked: 1, block_reason: "expired", http_status: 410 })
         );
-        return c.text("Link expired", 410);
+        const html = await getErrorPageHtml(
+            c.env.shorturl, c.env.R2_BUCKET, host, result,
+            { error_message: "Link expired", error_code: String(ErrorCode.LINK_EXPIRED), http_status: "410" }
+        );
+        return html ? c.html(html, 410) : c.json({ error: "expired", message: "Link expired" }, 410);
     }
 
     // 检查访问次数限制
@@ -263,7 +314,11 @@ app.get("/:code", async (c) => {
         c.executionCtx.waitUntil(
             recordVisitEvent(c.env.shorturl, { ...baseEvent, is_blocked: 1, block_reason: "limit", http_status: 410 })
         );
-        return c.text("Link visit limit reached", 410);
+        const html = await getErrorPageHtml(
+            c.env.shorturl, c.env.R2_BUCKET, host, result,
+            { error_message: "Link visit limit reached", error_code: String(ErrorCode.LINK_LIMIT_REACHED), http_status: "410" }
+        );
+        return html ? c.html(html, 410) : c.json({ error: "limit", message: "Link visit limit reached" }, 410);
     }
 
     // 如果需要密码验证

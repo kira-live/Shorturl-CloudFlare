@@ -1,3 +1,4 @@
+--TODO,资源集应删除模版ID，添加一个是否允许通过asset路径访问的开关
 CREATE TABLE IF NOT EXISTS users (
   id              INTEGER PRIMARY KEY AUTOINCREMENT, -- 建议 UUID
   email           TEXT,                          -- 可选：邮箱登录
@@ -70,7 +71,8 @@ CREATE TABLE IF NOT EXISTS redirect_templates (
 
 CREATE INDEX IF NOT EXISTS idx_redirect_templates_active ON redirect_templates(is_active);
 CREATE INDEX IF NOT EXISTS idx_redirect_templates_created_by ON redirect_templates(created_by);
-CREATE UNIQUE INDEX IF NOT EXISTS idx_redirect_templates_asset_prefix ON redirect_templates(asset_prefix);
+-- 改为普通索引，允许多个模板共享同一个 asset_prefix
+CREATE INDEX IF NOT EXISTS idx_redirect_templates_asset_prefix ON redirect_templates(asset_prefix);
 CREATE INDEX IF NOT EXISTS idx_redirect_templates_content_type ON redirect_templates(content_type);
 CREATE TABLE IF NOT EXISTS short_links (
   id                 INTEGER PRIMARY KEY AUTOINCREMENT, -- UUID
