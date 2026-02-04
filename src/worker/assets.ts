@@ -20,9 +20,9 @@ app.get("/:prefix/*", async (c) => {
   // 从数据库查询资源
   const asset = await c.env.shorturl
     .prepare(
-      `SELECT storage_type, content, r2_key, content_type, size
+      `SELECT storage_type, content, r2_key, content_type, size, is_public
        FROM template_assets
-       WHERE asset_prefix = ? AND filename = ?`
+       WHERE asset_prefix = ? AND filename = ? AND is_public = 1`
     )
     .bind(prefix, "/"+filename)
     .first<{
@@ -31,6 +31,7 @@ app.get("/:prefix/*", async (c) => {
       r2_key: string | null;
       content_type: string | null;
       size: number | null;
+      is_public: number;
     }>();
 
   if (!asset) {
