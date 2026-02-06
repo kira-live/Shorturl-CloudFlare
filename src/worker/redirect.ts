@@ -163,7 +163,7 @@ function parseUserAgent(ua: string | null): { device_type: string; os: string; b
     return { device_type, os, browser };
 }
 
-// 记录访问事件
+// 生成HMAC签名
 async function generateHmacSignature(
     secret: string,
     timestamp: number,

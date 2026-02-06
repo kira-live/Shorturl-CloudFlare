@@ -30,7 +30,7 @@ app.post('/login', async (c) => {
     const row = await c.env.shorturl
         .prepare(
             `
-      SELECT id, username, password_hash, role, status
+      SELECT id, username, password_hash, role, status, deleted_at
       FROM users
       WHERE username = ?
       LIMIT 1
@@ -43,12 +43,15 @@ app.post('/login', async (c) => {
             password_hash: string | null
             role: string | null
             status: number
+            deleted_at: number | null
         }>()
 
     if (!row) {
         const response: HttpResponseJsonBody = {data:null,  message: 'username or password incorrect', code: ErrorCode.DATA_INPUT_ERROR }
         return c.json(response, 401)
     }
+
+
 
     const hash = row.password_hash ?? ''
     let ok = false
@@ -62,9 +65,14 @@ app.post('/login', async (c) => {
         const response: HttpResponseJsonBody = {data:null,  message: 'username or password incorrect', code: ErrorCode.DATA_INPUT_ERROR }
         return c.json(response, 401)
     }
-    if (row.status !== 0) {
+    if (row.status !== 0 && row.status !== null) {
         const response: HttpResponseJsonBody = {data:null, message: 'user disabled', code: ErrorCode.DATA_INPUT_ERROR }
         return c.json(response, 403)
+    }
+    // 检查用户是否被软删除
+    if (row.deleted_at != null) {
+        const response: HttpResponseJsonBody = {data:null,  message: 'username or password incorrect', code: ErrorCode.DATA_INPUT_ERROR }
+        return c.json(response, 401)
     }
 
     const now = Math.floor(Date.now() / 1000)
