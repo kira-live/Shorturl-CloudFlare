@@ -10,6 +10,8 @@ interface ShortLink {
     target_url: string;
     redirect_http_code: number;
     use_interstitial: number;
+    interstitial_delay: number;                    // 中转页等待时间（秒），0为不等待
+    force_interstitial: number;                    // 是否强制中转页验签：0=不强制，1=强制
     template_id: number | null;
     password: string | null;
     max_visits: number | null;
@@ -162,6 +164,42 @@ function parseUserAgent(ua: string | null): { device_type: string; os: string; b
 }
 
 // 记录访问事件
+async function generateHmacSignature(
+    secret: string,
+    timestamp: number,
+    host: string,
+    code: string
+): Promise<string> {
+    const data = `${timestamp}:${host}:${code}`;
+    const encoder = new TextEncoder();
+    const keyData = encoder.encode(secret);
+    const messageData = encoder.encode(data);
+
+    const key = await crypto.subtle.importKey(
+        'raw',
+        keyData,
+        { name: 'HMAC', hash: 'SHA-256' },
+        false,
+        ['sign']
+    );
+
+    const signature = await crypto.subtle.sign('HMAC', key, messageData);
+    const signatureArray = Array.from(new Uint8Array(signature));
+    return signatureArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function verifyHmacSignature(
+    secret: string,
+    timestamp: number,
+    host: string,
+    code: string,
+    providedSignature: string
+): Promise<boolean> {
+    const expectedSignature = await generateHmacSignature(secret, timestamp, host, code);
+    return expectedSignature === providedSignature;
+}
+
+// 记录访问事件
 async function recordVisitEvent(db: D1Database, event: VisitEventData) {
     await db
         .prepare(`
@@ -238,6 +276,10 @@ app.get("/:code", async (c) => {
 
     // 通过查询参数获取密码（不再使用 path）
     const password = c.req.query("password") || null;
+
+    // 获取中转页签名参数
+    const timestampStr = c.req.query("t") || null;
+    const sign = c.req.query("s") || null;
 
     // 获取访问上下文信息
     const ip = c.req.header("cf-connecting-ip") || c.req.header("x-forwarded-for") || null;
@@ -372,6 +414,95 @@ app.get("/:code", async (c) => {
         }
     }
 
+    // 判断是否需要中转页逻辑
+    const needsInterstitial = result.use_interstitial && result.template_id;
+    const forceVerification = result.force_interstitial === 1;
+
+    // 如果使用中转页
+    if (needsInterstitial && result.template_id) {
+        const hmacSecret = c.env.JWT_SECRET;
+        const maxValiditySeconds = 30 * 60;
+        const templateId = result.template_id;  // 此时 TypeScript 知道它不是 null
+
+        // 检查是否带有 t 参数
+        if (timestampStr) {
+            // 不强制验签：只要有 t 参数就直接跳转
+            if (!forceVerification) {
+                c.executionCtx.waitUntil(
+                    Promise.all([
+                        recordVisitEvent(c.env.shorturl, baseEvent),
+                        c.env.shorturl
+                            .prepare(`
+                                UPDATE short_links
+                                SET total_clicks = total_clicks + 1, last_access_at = ?
+                                WHERE id = ?
+                            `)
+                            .bind(now, result.id)
+                            .run(),
+                    ])
+                );
+                return c.redirect(result.target_url, result.redirect_http_code as 301 | 302 | 307 | 308);
+            }
+
+            // 强制验签：需要验证签名和等待时间
+            if (sign) {
+                const timestamp = parseInt(timestampStr, 10);
+                const isValidSignature = await verifyHmacSignature(
+                    hmacSecret,
+                    timestamp,
+                    host,
+                    code,
+                    sign
+                );
+
+                if (isValidSignature) {
+                    const elapsedSeconds = now - timestamp;
+
+                    // 检查时间是否已超过中转页等待时间且未超过 30 分钟
+                    if (elapsedSeconds >= (result.interstitial_delay - 1) && elapsedSeconds <= maxValiditySeconds) {
+                        c.executionCtx.waitUntil(
+                            Promise.all([
+                                recordVisitEvent(c.env.shorturl, baseEvent),
+                                c.env.shorturl
+                                    .prepare(`
+                                        UPDATE short_links
+                                        SET total_clicks = total_clicks + 1, last_access_at = ?
+                                        WHERE id = ?
+                                    `)
+                                    .bind(now, result.id)
+                                    .run(),
+                            ])
+                        );
+                        return c.redirect(result.target_url, result.redirect_http_code as 301 | 302 | 307 | 308);
+                    }
+                }
+            }
+            // 强制验签但验证失败，继续显示中转页
+        }
+
+        // 没有 t 参数 或 强制验签失败：显示中转页
+        const newTimestamp = now;
+        const newSign = await generateHmacSignature(hmacSecret, newTimestamp, host, code);
+
+        const templateResult = await getTemplateContent(
+            c.env.shorturl,
+            templateId,
+            {
+                delay: String(result.interstitial_delay),
+                timestamp: String(newTimestamp),
+                sign: newSign
+            },
+            c.env.R2_BUCKET
+        );
+
+        if (templateResult) {
+            c.executionCtx.waitUntil(
+                recordVisitEvent(c.env.shorturl, { ...baseEvent, block_reason: "interstitial", http_status: 200 })
+            );
+            return c.html(templateResult.html);
+        }
+    }
+
     // 记录成功访问事件 + 更新统计
     c.executionCtx.waitUntil(
         Promise.all([
@@ -386,20 +517,6 @@ app.get("/:code", async (c) => {
                 .run(),
         ])
     );
-
-    // 如果使用中转页
-    if (result.use_interstitial && result.template_id) {
-        const templateResult = await getTemplateContent(
-            c.env.shorturl,
-            result.template_id,
-            { target_url: result.target_url },
-            c.env.R2_BUCKET
-        );
-
-        if (templateResult) {
-            return c.html(templateResult.html);
-        }
-    }
 
     // 执行跳转
     return c.redirect(result.target_url, result.redirect_http_code as 301 | 302 | 307 | 308);

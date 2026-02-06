@@ -82,6 +82,8 @@ CREATE TABLE IF NOT EXISTS short_links (
 
   redirect_http_code INTEGER NOT NULL DEFAULT 302,      -- 301/302/307/308 等
   use_interstitial   INTEGER NOT NULL DEFAULT 0,        -- 是否中转页
+  interstitial_delay INTEGER NOT NULL DEFAULT 0,        -- 中转页等待时间（秒），0为不等待
+  force_interstitial INTEGER NOT NULL DEFAULT 0,        -- 是否强制中转页验签：0=不强制，1=强制
   template_id        INTEGER,                           -- 中间页模板 redirect_templates.id（无外键）
 
   -- 短链接级别的模板设置（NULL 则继承域名设置，域名也为 NULL 则使用系统默认）
@@ -117,6 +119,7 @@ CREATE INDEX IF NOT EXISTS idx_short_links_template ON short_links(template_id);
 CREATE INDEX IF NOT EXISTS idx_short_links_error_tpl ON short_links(error_template_id);
 CREATE INDEX IF NOT EXISTS idx_short_links_password_tpl ON short_links(password_template_id);
 CREATE INDEX IF NOT EXISTS idx_short_links_last_access ON short_links(last_access_at);
+CREATE INDEX IF NOT EXISTS idx_short_links_force_interstitial ON short_links(force_interstitial);
 CREATE TABLE IF NOT EXISTS tags (
   id            INTEGER PRIMARY KEY AUTOINCREMENT, -- UUID
   name          TEXT NOT NULL,                     -- 标签名（全局唯一）
