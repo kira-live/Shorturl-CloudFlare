@@ -44,6 +44,7 @@
 		"check": "tsc && vite build && wrangler deploy --dry-run",
 		"predeploy": "npm run build",
 		"deploy": "wrangler deploy",
+		"runsql": "wrangler",
 		"dev": "vite",
 		"lint": "eslint .",
 		"preview": "npm run build && vite preview"

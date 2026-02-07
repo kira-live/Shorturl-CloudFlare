@@ -2,36 +2,36 @@ import { Hono } from "hono";
 
 const app = new Hono<{ Bindings: Env }>();
 
-
 app.get("/:prefix/*", async (c) => {
   const prefix = c.req.param("prefix");
-  const path = c.req.path;
-  
-  // 从路径中提取文件名：/assets/a3f8x9k2/css/style.css -> css/style.css
-  const prefixPath = `/assets/${prefix}/`;
-  const filename = path.startsWith(prefixPath)
-    ? path.slice(prefixPath.length)
-    : path.split(`/${prefix}/`).pop();
+
+  // 改：不再依赖 c.req.param("*")，直接从完整 path 截取
+  const pathname = new URL(c.req.url).pathname; // e.g. "a3f8x9k2/css/style.css"
+  const marker = `${prefix}/`;
+  const idx = pathname.indexOf(marker);
+
+  // 删掉开头到“找到的第一个 prefix + 1(/)”的位置
+  const filename = idx >= 0 ? pathname.slice(idx + marker.length) : "";
 
   if (!filename) {
     return c.notFound();
   }
 
+
   // 从数据库查询资源
   const asset = await c.env.shorturl
     .prepare(
-      `SELECT storage_type, content, r2_key, content_type, size, is_public
-       FROM template_assets
-       WHERE asset_prefix = ? AND filename = ? AND is_public = 1`
+      `SELECT storage_type, content, r2_key, content_type, size
+           FROM template_assets
+           WHERE asset_prefix = ? AND filename = ? AND is_public = 1`
     )
-    .bind(prefix, "/"+filename)
+    .bind(prefix, filename)
     .first<{
       storage_type: number;
       content: ArrayBuffer | null;
       r2_key: string | null;
       content_type: string | null;
       size: number | null;
-      is_public: number;
     }>();
 
   if (!asset) {
@@ -58,7 +58,7 @@ app.get("/:prefix/*", async (c) => {
     if (!asset.r2_key || !c.env.R2_BUCKET) {
       return c.notFound();
     }
-    
+
     const object = await c.env.R2_BUCKET.get(asset.r2_key);
     if (!object) {
       return c.notFound();

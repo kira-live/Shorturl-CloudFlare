@@ -497,7 +497,7 @@ app.get("/:code", async (c) => {
 
         if (templateResult) {
             c.executionCtx.waitUntil(
-                recordVisitEvent(c.env.shorturl, { ...baseEvent, block_reason: "interstitial", http_status: 200 })
+                recordVisitEvent(c.env.shorturl, { ...baseEvent,is_blocked:1, block_reason: "interstitial", http_status: 200 })
             );
             return c.html(templateResult.html);
         }
