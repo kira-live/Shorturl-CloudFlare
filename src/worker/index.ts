@@ -16,7 +16,7 @@ app.get("/"+__WEB_LOCATION__+"/*", async  (c)=>
 {
 
     const url = c.req.path.replace("/"+__WEB_LOCATION__+"/", "");
-    console.log(url);
+    //console.log(url);
     const resp = await c.env.ASSETS.fetch("https://assets.local/"+url);
     if (resp.status === 404)
     {
