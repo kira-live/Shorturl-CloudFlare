@@ -112,4 +112,108 @@ export const domainApi = {
         ),
 };
 
+// 用户相关接口类型定义
+export interface User {
+    id: number;
+    email: string | null;
+    username: string | null;
+    role: string;
+    status: number;
+    deleted_at: number | null;
+    created_at: number;
+    updated_at: number;
+}
+
+export interface UserListResponse {
+    results: User[];
+    pagination: {
+        page: number;
+        pageSize: number;
+        total: number;
+        totalPages: number;
+    };
+}
+
+export interface CreateUserRequest {
+    email?: string;
+    username?: string;
+    password: string;
+    role?: string;
+    status?: number;
+}
+
+export interface UpdateUserRequest {
+    email?: string;
+    username?: string;
+    password?: string;
+    role?: string;
+    status?: number;
+}
+
+// 新增：更新个人信息请求类型
+export interface UpdateProfileRequest {
+    email?: string;
+}
+
+// 新增：修改密码请求类型
+export interface ChangePasswordRequest {
+    oldPassword: string;
+    newPassword: string;
+}
+
+// 用户 API 方法
+export const userApi = {
+    // 获取用户列表
+    getList: (page: number = 1, pageSize: number = 10) => 
+        api.get<{ code: number; message: string; data: UserListResponse }>(
+            `/api/user/list?page=${page}&pageSize=${pageSize}`
+        ),
+
+    // 获取用户详情
+    getDetail: (id: number) =>
+        api.get<{ code: number; message: string; data: User }>(
+            `/api/user/detail/${id}`
+        ),
+
+    // 创建用户
+    create: (data: CreateUserRequest) =>
+        api.post<{ code: number; message: string; data?: User }>(
+            '/api/user/create',
+            data
+        ),
+
+    // 更新用户
+    update: (id: number, data: UpdateUserRequest) =>
+        api.put<{ code: number; message: string; data?: User }>(
+            `/api/user/update/${id}`,
+            data
+        ),
+
+    // 删除用户
+    delete: (id: number) =>
+        api.delete<{ code: number; message: string }>(
+            `/api/user/delete/${id}`
+        ),
+
+    // 新增：获取当前用户信息
+    getCurrentUser: () =>
+        api.get<{ code: number; message: string; data: User }>(
+            '/api/user/me'
+        ),
+
+    // 新增：更新当前用户个人信息
+    updateProfile: (data: UpdateProfileRequest) =>
+        api.put<{ code: number; message: string; data?: User }>(
+            '/api/user/me',
+            data
+        ),
+
+    // 新增：修改当前用户密码
+    changePassword: (data: ChangePasswordRequest) =>
+        api.put<{ code: number; message: string }>(
+            '/api/user/me/password',
+            data
+        ),
+};
+
 export default api;

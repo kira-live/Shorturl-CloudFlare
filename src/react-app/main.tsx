@@ -6,6 +6,9 @@ import { LoginPage } from "./pages/LoginPage";
 import { AdminLayout } from "./components/AdminLayout";
 import { HomePage } from "./pages/HomePage";
 import { DomainsPage } from "./pages/DomainsPage";
+import { UsersPage } from "./pages/UsersPage";
+import { SettingsPage } from "./pages/SettingsPage";
+import { ChangePasswordPage } from "./pages/ChangePasswordPage";
 
 const BASE_URL = import.meta.env.BASE_URL;
 
@@ -26,11 +29,12 @@ createRoot(document.getElementById("root")!).render(
 					<Route element={<AdminLayout />}>
 						<Route path="/" element={<HomePage />} />
 						<Route path="/domains" element={<DomainsPage />} />
+						<Route path="/users" element={<UsersPage />} />
+						<Route path="/user-settings" element={<SettingsPage />} />
+						<Route path="/change-password" element={<ChangePasswordPage />} />
 						{/* 后续页面在此添加 */}
-						{/* <Route path="/users" element={<UsersPage />} /> */}
 						{/* <Route path="/links" element={<LinksPage />} /> */}
 						{/* <Route path="/templates" element={<TemplatesPage />} /> */}
-						{/* <Route path="/settings" element={<SettingsPage />} /> */}
 					</Route>
 				</Route>
 				<Route path="*" element={<Navigate to="/" replace />} />

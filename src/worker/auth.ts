@@ -1,11 +1,10 @@
 import { Hono } from 'hono'
-import { ErrorCode, HttpResponseJsonBody} from './util'
-import { compareSync } from 'bcryptjs'
+import {CurrentUser, ErrorCode, HttpResponseJsonBody, Variables} from './util'
 import {sign, verify} from 'hono/jwt'
 import { createMiddleware } from 'hono/factory'
 
 
-const app = new Hono<{ Bindings: Env }>()
+const app = new Hono<{Bindings: Env}>()
 interface LoginRequest {
     username?: string
     password?: string
@@ -56,6 +55,7 @@ app.post('/login', async (c) => {
     const hash = row.password_hash ?? ''
     let ok = false
     try {
+        const { compareSync } = await import('bcryptjs')
         ok = compareSync(password, hash)
     } catch {
         ok = false
@@ -92,7 +92,7 @@ app.post('/login', async (c) => {
     )
 })
 
-const authVerify = createMiddleware<{Bindings:Env}>(async (c, next) => {
+const authVerify = createMiddleware<{Variables: Variables ;Bindings:Env}>(async (c, next) => {
     const path = c.req.path
     if (path === '/api/auth/login'||!path.startsWith("/api/")) {
         await next()
@@ -116,8 +116,10 @@ const authVerify = createMiddleware<{Bindings:Env}>(async (c, next) => {
         // token 校验通过后，查库确认用户是否被禁用
         const userId = decodedVerify?.sub
         const iat = decodedVerify?.iat as number | undefined
+        const username = decodedVerify?.username as string | undefined
+        const role = decodedVerify?.role as string | undefined
         
-        if (userId == null || iat == null) {
+        if (userId == null || iat == null || !username || !role) {
             const response: HttpResponseJsonBody = { data: null, message: 'token error', code: ErrorCode.UNAUTHORIZED }
             return c.json(response, 401)
         }
@@ -157,6 +159,13 @@ const authVerify = createMiddleware<{Bindings:Env}>(async (c, next) => {
             const response: HttpResponseJsonBody = { data: null, message: 'token expired due to password change', code: ErrorCode.UNAUTHORIZED }
             return c.json(response, 401)
         }
+
+        // 将用户信息注入到上下文中
+        c.set('currentUser', {
+            id: Number(userId),
+            username,
+            role
+        } as CurrentUser)
 
         await next()
     } catch  {

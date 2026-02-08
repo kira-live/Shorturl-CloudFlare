@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import api from "../lib/api";
+import axios from "axios";
 
 export function LoginPage() {
     const navigate = useNavigate();
@@ -25,8 +26,11 @@ export function LoginPage() {
 
             localStorage.setItem("auth_token", token);
             navigate("/", { replace: true });
-        } catch (e: any) {
-            const msg = e?.response?.data?.message || "登录失败";
+        } catch (e) {
+            let msg = "登录失败";
+            if (axios.isAxiosError(e)) {
+                msg = e.response?.data?.message || msg;
+            }
             setError(msg);
         } finally {
             setLoading(false);
