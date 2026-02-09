@@ -430,6 +430,14 @@ export const templateApi = {
         api.post<{ code: number; message: string; data?: { is_active: number } }>(
             `/api/template/toggle-active/${id}`
         ),
+
+    // 获取模板选择选项
+    getSelectOptions: (type?: number) => {
+        const query = type !== undefined ? `?type=${type}` : '';
+        return api.get<{ code: number; message: string; data: Array<{id: number; name: string; type: number | null; content_type: number; is_active: number}> }>(
+            `/api/template/select-options${query}`
+        );
+    },
 };
 
 export default api;

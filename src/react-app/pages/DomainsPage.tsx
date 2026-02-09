@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { domainApi, Domain, CreateDomainRequest, UpdateDomainRequest } from "../lib/api";
+import { domainApi, Domain, CreateDomainRequest, UpdateDomainRequest, templateApi } from "../lib/api";
 
 type MessageType = 'success' | 'error' | 'info';
 
@@ -33,7 +33,13 @@ export function DomainsPage() {
         is_active: 1,
         is_default: 0,
         notes: '',
+        error_template_id: undefined,
+        password_template_id: undefined,
+        interstitial_template_id: undefined,
     });
+
+    // 模板选择选项
+    const [templateOptions, setTemplateOptions] = useState<Array<{id: number; name: string; type: number | null; content_type: number; is_active: number}>>([]);
 
     // 显示消息
     const showMessage = (type: MessageType, text: string) => {
@@ -61,8 +67,21 @@ export function DomainsPage() {
         }
     };
 
+    // 加载模板选项
+    const loadTemplateOptions = async () => {
+        try {
+            const res = await templateApi.getSelectOptions();
+            if (res.data.code === 0) {
+                setTemplateOptions(res.data.data);
+            }
+        } catch (error) {
+            console.error('加载模板选项失败:', error);
+        }
+    };
+
     useEffect(() => {
         loadDomains();
+        loadTemplateOptions();
     }, [page]);
 
     // 打开创建弹窗
@@ -73,6 +92,9 @@ export function DomainsPage() {
             is_active: 1,
             is_default: 0,
             notes: '',
+            error_template_id: undefined,
+            password_template_id: undefined,
+            interstitial_template_id: undefined,
         });
         setShowModal(true);
     };
@@ -86,6 +108,9 @@ export function DomainsPage() {
             is_active: domain.is_active,
             is_default: domain.is_default,
             notes: domain.notes || '',
+            error_template_id: domain.error_template_id || undefined,
+            password_template_id: domain.password_template_id || undefined,
+            interstitial_template_id: domain.interstitial_template_id || undefined,
         });
         setShowModal(true);
     };
@@ -117,6 +142,9 @@ export function DomainsPage() {
                     is_active: formData.is_active,
                     is_default: formData.is_default,
                     notes: formData.notes || undefined,
+                    error_template_id: formData.error_template_id || null,
+                    password_template_id: formData.password_template_id || null,
+                    interstitial_template_id: formData.interstitial_template_id || null,
                 };
                 const res = await domainApi.update(editingDomain.id, updateData);
                 if (res.data.code === 0) {
@@ -162,6 +190,13 @@ export function DomainsPage() {
     // 格式化时间
     const formatTime = (timestamp: number) => {
         return new Date(timestamp * 1000).toLocaleString('zh-CN');
+    };
+
+    // 获取模板名称
+    const getTemplateName = (templateId: number | null) => {
+        if (!templateId) return '-';
+        const template = templateOptions.find(t => t.id === templateId);
+        return template ? template.name : `模板 #${templateId}`;
     };
 
     return (
@@ -211,6 +246,9 @@ export function DomainsPage() {
                             <th>域名</th>
                             <th>状态</th>
                             <th>默认</th>
+                            <th>错误页模板</th>
+                            <th>密码页模板</th>
+                            <th>中间页模板</th>
                             <th>备注</th>
                             <th>创建时间</th>
                             <th>操作</th>
@@ -219,13 +257,13 @@ export function DomainsPage() {
                     <tbody>
                         {loading && domains.length === 0 ? (
                             <tr>
-                                <td colSpan={7} className="text-center py-8">
+                                <td colSpan={10} className="text-center py-8">
                                     <span className="loading loading-spinner loading-lg"></span>
                                 </td>
                             </tr>
                         ) : domains.length === 0 ? (
                             <tr>
-                                <td colSpan={7} className="text-center py-8 text-gray-500">
+                                <td colSpan={10} className="text-center py-8 text-gray-500">
                                     暂无域名
                                 </td>
                             </tr>
@@ -245,6 +283,15 @@ export function DomainsPage() {
                                         ) : (
                                             <span className="text-gray-400">-</span>
                                         )}
+                                    </td>
+                                    <td className="text-sm">
+                                        <span className="text-gray-600">{getTemplateName(domain.error_template_id)}</span>
+                                    </td>
+                                    <td className="text-sm">
+                                        <span className="text-gray-600">{getTemplateName(domain.password_template_id)}</span>
+                                    </td>
+                                    <td className="text-sm">
+                                        <span className="text-gray-600">{getTemplateName(domain.interstitial_template_id)}</span>
                                     </td>
                                     <td>{domain.notes || '-'}</td>
                                     <td className="text-sm text-gray-500">
@@ -378,6 +425,85 @@ export function DomainsPage() {
                                     onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                                     rows={3}
                                 />
+                            </div>
+
+                            <div className="divider my-2"></div>
+
+                            {/* 模板选择 */}
+                            <div className="space-y-4">
+                                <h4 className="font-medium text-base-content">模板设置</h4>
+                                <p className="text-sm text-gray-500">为该域名配置专用模板，留空则使用系统默认模板</p>
+
+                                <div className="grid grid-cols-1 gap-4">
+                                    <div className="form-control">
+                                        <label className="label">
+                                            <span className="label-text font-medium">错误页模板</span>
+                                        </label>
+                                        <select
+                                            className="select select-bordered w-full focus:select-primary"
+                                            value={formData.error_template_id || ''}
+                                            onChange={(e) => setFormData({
+                                                ...formData,
+                                                error_template_id: e.target.value ? Number(e.target.value) : undefined
+                                            })}
+                                        >
+                                            <option value="">使用系统默认</option>
+                                            {templateOptions
+                                                .filter(t => t.type === 2 || t.type === null || t.type === 0)
+                                                .map(template => (
+                                                <option key={template.id} value={template.id}>
+                                                    {template.name} {template.type === 2 ? '(错误页)' : ''}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    <div className="form-control">
+                                        <label className="label">
+                                            <span className="label-text font-medium">密码验证页模板</span>
+                                        </label>
+                                        <select
+                                            className="select select-bordered w-full focus:select-primary"
+                                            value={formData.password_template_id || ''}
+                                            onChange={(e) => setFormData({
+                                                ...formData,
+                                                password_template_id: e.target.value ? Number(e.target.value) : undefined
+                                            })}
+                                        >
+                                            <option value="">使用系统默认</option>
+                                            {templateOptions
+                                                .filter(t => t.type === 1 || t.type === null || t.type === 0)
+                                                .map(template => (
+                                                <option key={template.id} value={template.id}>
+                                                    {template.name} {template.type === 1 ? '(密码页)' : ''}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    <div className="form-control">
+                                        <label className="label">
+                                            <span className="label-text font-medium">中间页模板</span>
+                                        </label>
+                                        <select
+                                            className="select select-bordered w-full focus:select-primary"
+                                            value={formData.interstitial_template_id || ''}
+                                            onChange={(e) => setFormData({
+                                                ...formData,
+                                                interstitial_template_id: e.target.value ? Number(e.target.value) : undefined
+                                            })}
+                                        >
+                                            <option value="">使用系统默认</option>
+                                            {templateOptions
+                                                .filter(t => t.type === null || t.type === 0)
+                                                .map(template => (
+                                                <option key={template.id} value={template.id}>
+                                                    {template.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
                             </div>
 
                             <div className="divider my-2"></div>
