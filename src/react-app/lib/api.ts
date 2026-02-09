@@ -439,5 +439,145 @@ export const templateApi = {
         );
     },
 };
+export interface TagInfo {
+    id: number;
+    name: string;
+}
 
+export interface ShortLink {
+    id: number;
+    domain_id: number;
+    code: string;
+    target_url: string;
+    owner_user_id: number;
+    redirect_http_code: number;
+    use_interstitial: number;
+    interstitial_delay: number;
+    force_interstitial: number;
+    template_id: number | null;
+    error_template_id: number | null;
+    password_template_id: number | null;
+    password: string | null;
+    max_visits: number | null;
+    expire_at: number | null;
+    is_disabled: number;
+    deleted_at: number | null;
+    remark: string | null;
+    created_at: number;
+    updated_at: number | null;
+    total_clicks: number;
+    last_access_at: number | null;
+}
+
+export interface ShortLinkWithDomain extends ShortLink {
+    domain_host: string;
+    tags: TagInfo[];
+}
+
+export interface ShortLinkListResponse {
+    results: ShortLinkWithDomain[];
+    pagination: {
+        page: number;
+        pageSize: number;
+        total: number;
+        totalPages: number;
+    };
+}
+
+export interface CreateShortLinkRequest {
+    domain_id: number;
+    code?: string;
+    target_url: string;
+    redirect_http_code?: number;
+    use_interstitial?: number;
+    interstitial_delay?: number;
+    force_interstitial?: number;
+    template_id?: number | null;
+    error_template_id?: number | null;
+    password_template_id?: number | null;
+    password?: string | null;
+    max_visits?: number | null;
+    expire_at?: number | null;
+    remark?: string | null;
+    tags?: string[];
+}
+
+export interface UpdateShortLinkRequest {
+    domain_id?: number;
+    code?: string;
+    target_url?: string;
+    redirect_http_code?: number;
+    use_interstitial?: number;
+    interstitial_delay?: number;
+    force_interstitial?: number;
+    template_id?: number | null;
+    error_template_id?: number | null;
+    password_template_id?: number | null;
+    password?: string | null;
+    max_visits?: number | null;
+    expire_at?: number | null;
+    is_disabled?: number;
+    remark?: string | null;
+    tags?: string[];
+}
+
+// 短链接 API 方法
+export const shortLinkApi = {
+    // 获取短链接列表
+    getList: (params: {
+        page?: number;
+        pageSize?: number;
+        domain_id?: string;
+        keyword?: string;
+        tag?: string;
+        is_disabled?: string;
+        order_by?: string;
+        order_dir?: string;
+    } = {}) => {
+        const query = new URLSearchParams();
+        query.set('page', String(params.page || 1));
+        query.set('pageSize', String(params.pageSize || 10));
+        if (params.domain_id) query.set('domain_id', params.domain_id);
+        if (params.keyword) query.set('keyword', params.keyword);
+        if (params.tag) query.set('tag', params.tag);
+        if (params.is_disabled !== undefined && params.is_disabled !== '') query.set('is_disabled', params.is_disabled);
+        if (params.order_by) query.set('order_by', params.order_by);
+        if (params.order_dir) query.set('order_dir', params.order_dir);
+        return api.get<{ code: number; message: string; data: ShortLinkListResponse }>(
+            `/api/shortlink/list?${query.toString()}`
+        );
+    },
+
+    // 获取短链接详情
+    getDetail: (id: number) =>
+        api.get<{ code: number; message: string; data: ShortLinkWithDomain }>(
+            `/api/shortlink/detail/${id}`
+        ),
+
+    // 创建短链接
+    create: (data: CreateShortLinkRequest) =>
+        api.post<{ code: number; message: string; data?: ShortLinkWithDomain }>(
+            '/api/shortlink/create',
+            data
+        ),
+
+    // 更新短链接
+    update: (id: number, data: UpdateShortLinkRequest) =>
+        api.put<{ code: number; message: string; data?: ShortLinkWithDomain }>(
+            `/api/shortlink/update/${id}`,
+            data
+        ),
+
+    // 删除短链接
+    delete: (id: number) =>
+        api.delete<{ code: number; message: string }>(
+            `/api/shortlink/delete/${id}`
+        ),
+
+    // 切换启用/禁用状态
+    toggleStatus: (id: number) =>
+        api.put<{ code: number; message: string; data?: { is_disabled: number } }>(
+            `/api/shortlink/toggle-status/${id}`
+        ),
+};
 export default api;

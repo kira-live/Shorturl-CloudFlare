@@ -7,6 +7,7 @@ import domain from "./api/domain";
 import user from "./api/user";
 import templateAssets from "./api/template-assets";
 import template from "./api/template";
+import shortlink from "./api/shortlink";
 const app = new Hono<{ Bindings: Env }>();
 app.use(authVerify)
 app.onError((err, c) => {
@@ -34,6 +35,7 @@ app.route('/api/domain/',domain)
 app.route('/api/user/',user)
 app.route('/api/template-assets/', templateAssets)
 app.route('/api/template/', template)
+app.route('/api/shortlink/', shortlink)
 
 app.route('/', redirect);
 

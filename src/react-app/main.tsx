@@ -11,6 +11,7 @@ import { SettingsPage } from "./pages/SettingsPage";
 import { ChangePasswordPage } from "./pages/ChangePasswordPage";
 import { TemplateResourcesPage } from "./pages/TemplateResourcesPage";
 import {TemplatesPage} from "./pages/TemplatesPage.tsx";
+import {ShortLinksPage} from "./pages/ShortLinksPage.tsx";
 
 const BASE_URL = import.meta.env.BASE_URL;
 
@@ -36,6 +37,8 @@ createRoot(document.getElementById("root")!).render(
 						<Route path="/change-password" element={<ChangePasswordPage />} />
 						<Route path="/template-resources" element={<TemplateResourcesPage />} />
 						<Route path="/templates" element={<TemplatesPage />} />
+						<Route path="/links" element={<ShortLinksPage />} />
+
 						{/* 后续页面在此添加 */}
 						{/* <Route path="/links" element={<LinksPage />} /> */}
 						{/* <Route path="/templates" element={<TemplatesPage />} /> */}
