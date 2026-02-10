@@ -9,6 +9,95 @@ interface LoginRequest {
     username?: string
     password?: string
 }
+
+interface InitRequest {
+    username: string
+    password: string
+}
+
+app.post('/init', async (c) => {
+    let initInfo: InitRequest
+    try {
+        initInfo = await c.req.json()
+    } catch {
+        const response: HttpResponseJsonBody = { data: null, message: 'init data error', code: ErrorCode.DATA_INPUT_ERROR }
+        return c.json(response, 400)
+    }
+
+    if (!initInfo?.username || !initInfo?.password) {
+        const response: HttpResponseJsonBody = { data: null, message: 'username or password required', code: ErrorCode.DATA_INPUT_ERROR }
+        return c.json(response, 400)
+    }
+
+    const db = c.env.shorturl
+    const usersTable = await db.prepare(`
+        SELECT name FROM sqlite_master WHERE type='table' AND name='users'
+    `).first()
+
+    const domainsTable = await db.prepare(`
+        SELECT name FROM sqlite_master WHERE type='table' AND name='domains'
+    `).first()
+    if (usersTable || domainsTable) {
+        const response: HttpResponseJsonBody = { data: null, message: 'database already initialized', code: ErrorCode.DATA_INPUT_ERROR }
+        return c.json(response, 404)
+    }
+
+    const now = Math.floor(Date.now() / 1000)
+    const { hashSync } = await import('bcryptjs')
+    const passwordHash = hashSync(String(initInfo.password), 10)
+    await db.prepare(`
+        INSERT INTO users (
+            email,
+            username,
+            password_hash,
+            role,
+            status,
+            created_at,
+            updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)
+    `).bind(
+        null,
+        String(initInfo.username).trim(),
+        passwordHash,
+        'admin',
+        0,
+        now,
+        now
+    ).run()
+
+    const host = c.req.header('host')
+    if (!host) {
+        const response: HttpResponseJsonBody = { data: null, message: 'host not found', code: ErrorCode.DATA_INPUT_ERROR }
+        return c.json(response, 400)
+    }
+
+    await db.prepare(`
+        INSERT INTO domains (
+            host,
+            is_active,
+            is_default,
+            notes,
+            error_template_id,
+            password_template_id,
+            interstitial_template_id,
+            created_at,
+            updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).bind(
+        host,
+        1,
+        1,
+        null,
+        1,
+        2,
+        3,
+        now,
+        now
+    ).run()
+
+    const response: HttpResponseJsonBody = { data: null, message: 'init success', code: ErrorCode.SUCCESS }
+    return c.json(response, 201)
+})
 app.post('/login', async (c) => {
     let userInfo: LoginRequest
     try {
@@ -94,7 +183,7 @@ app.post('/login', async (c) => {
 
 const authVerify = createMiddleware<{Variables: Variables ;Bindings:Env}>(async (c, next) => {
     const path = c.req.path
-    if (path === '/api/auth/login'||!path.startsWith("/api/")) {
+    if (path === '/api/auth/login'|| path === '/api/auth/init' || !path.startsWith("/api/")) {
         await next()
         return
     }

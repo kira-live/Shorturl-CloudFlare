@@ -37,7 +37,7 @@
 		"typescript": "5.8.3",
 		"typescript-eslint": "8.48.0",
 		"vite": "^6.0.0",
-		"wrangler": "^4.60.0"
+		"wrangler": "^4.63.0"
 	},
 	"private": true,
 	"scripts": {
@@ -45,8 +45,8 @@
 		"cf-typegen": "wrangler types",
 		"check": "tsc && vite build && wrangler deploy --dry-run",
 		"predeploy": "npm run build",
-		"deploy": "wrangler deploy",
-		"runsql": "wrangler",
+		"db:init" : "wrangler d1 execute shorturl --remote --file sql.txt",
+		"deploy": "npm run db:init & wrangler deploy",
 		"dev": "vite",
 		"lint": "eslint .",
 		"preview": "npm run build && vite preview"
