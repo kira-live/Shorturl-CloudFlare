@@ -19,12 +19,12 @@ export function ChangePasswordPage() {
         setError("");
 
         if (newPassword !== confirmPassword) {
-            setError("新密码与确认密码不一致");
+            setError("new password different with confirm password");
             return;
         }
 
         if (newPassword.length < 6) {
-            setError("新密码长度至少为 6 位");
+            setError("password less than 6 characters long");
             return;
         }
 
@@ -36,7 +36,7 @@ export function ChangePasswordPage() {
             });
 
             if (response.data.code === 0) {
-                setMessage("密码修改成功,即将跳转到登录页...");
+                setMessage("success, will redirect to login page");
                 setOldPassword("");
                 setNewPassword("");
                 setConfirmPassword("");
@@ -47,13 +47,13 @@ export function ChangePasswordPage() {
                     navigate("/login", { replace: true });
                 }, 1500);
             } else {
-                setError(response.data.message || "修改失败");
+                setError(response.data.message || "Failed to change password");
             }
         } catch (err: unknown) {
             if (axios.isAxiosError(err)) {
-                setError(err.response?.data?.message || "修改密码失败,请稍后重试");
+                setError(err.response?.data?.message || "Failed to change password");
             } else {
-                setError("修改密码失败,请稍后重试");
+                setError("Failed to change password");
             }
         } finally {
             setLoading(false);
@@ -62,7 +62,7 @@ export function ChangePasswordPage() {
 
     return (
         <div className="container mx-auto p-6">
-            <h1 className="text-2xl font-bold mb-6">修改密码</h1>
+            <h1 className="text-2xl font-bold mb-6">Change password</h1>
             
             <div className="max-w-md">
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -80,7 +80,7 @@ export function ChangePasswordPage() {
 
                     <div className="form-control">
                         <label className="label">
-                            <span className="label-text">旧密码</span>
+                            <span className="label-text">old password</span>
                         </label>
                         <input
                             type="password"
@@ -94,7 +94,7 @@ export function ChangePasswordPage() {
 
                     <div className="form-control">
                         <label className="label">
-                            <span className="label-text">新密码</span>
+                            <span className="label-text">new password</span>
                         </label>
                         <input
                             type="password"
@@ -108,7 +108,7 @@ export function ChangePasswordPage() {
 
                     <div className="form-control">
                         <label className="label">
-                            <span className="label-text">确认新密码</span>
+                            <span className="label-text">confirm password</span>
                         </label>
                         <input
                             type="password"
@@ -125,7 +125,7 @@ export function ChangePasswordPage() {
                         className="btn btn-primary w-full"
                         disabled={loading}
                     >
-                        {loading ? "修改中..." : "修改密码"}
+                        {loading ? "changing..." : "change password"}
                     </button>
                 </form>
             </div>

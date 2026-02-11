@@ -16,15 +16,15 @@ export function InitPage() {
         setError("");
 
         if (!username.trim()) {
-            setError("请输入用户名");
+            setError("Please enter a username");
             return;
         }
         if (!password) {
-            setError("请输入密码");
+            setError("Please enter a password");
             return;
         }
         if (password !== confirmPassword) {
-            setError("两次输入的密码不一致");
+            setError("The passwords do not match");
             return;
         }
 
@@ -33,7 +33,7 @@ export function InitPage() {
             await authApi.init({ username: username.trim(), password });
             navigate("/login", { replace: true });
         } catch (e) {
-            let msg = "初始化失败";
+            let msg = "Initialization failed";
             if (axios.isAxiosError(e)) {
                 msg = e.response?.data?.message || msg;
             }
@@ -50,20 +50,20 @@ export function InitPage() {
                     <div className="text-center space-y-1">
                         <span className="text-4xl">🚀</span>
                         <h1 className="text-3xl font-extrabold tracking-tight">
-                            系统初始化
+                            System Initialization
                         </h1>
                         <p className="text-sm text-base-content/60">
-                            首次使用，请设置管理员账号
+                            First time use — please create an admin account
                         </p>
                     </div>
 
                     <div className="divider my-0" />
 
                     <label className="form-control w-full">
-                        <span className="label-text font-medium mb-1">管理员用户名</span>
+                        <span className="label-text font-medium mb-1">Admin Username</span>
                         <input
                             className="input input-bordered input-lg w-full focus:input-primary transition-all"
-                            placeholder="请输入用户名"
+                            placeholder="Enter username"
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
                             onKeyDown={(e) => e.key === "Enter" && handleInit()}
@@ -71,11 +71,11 @@ export function InitPage() {
                     </label>
 
                     <label className="form-control w-full">
-                        <span className="label-text font-medium mb-1">密码</span>
+                        <span className="label-text font-medium mb-1">Password</span>
                         <input
                             type="password"
                             className="input input-bordered input-lg w-full focus:input-primary transition-all"
-                            placeholder="请输入密码"
+                            placeholder="Enter password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             onKeyDown={(e) => e.key === "Enter" && handleInit()}
@@ -83,11 +83,11 @@ export function InitPage() {
                     </label>
 
                     <label className="form-control w-full">
-                        <span className="label-text font-medium mb-1">确认密码</span>
+                        <span className="label-text font-medium mb-1">Confirm Password</span>
                         <input
                             type="password"
                             className="input input-bordered input-lg w-full focus:input-primary transition-all"
-                            placeholder="请再次输入密码"
+                            placeholder="Re-enter password"
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
                             onKeyDown={(e) => e.key === "Enter" && handleInit()}
@@ -111,10 +111,10 @@ export function InitPage() {
                         {loading ? (
                             <>
                                 <span className="loading loading-spinner loading-sm" />
-                                初始化中...
+                                Initializing...
                             </>
                         ) : (
-                            "确定初始化"
+                            "Initialize"
                         )}
                     </button>
                 </div>

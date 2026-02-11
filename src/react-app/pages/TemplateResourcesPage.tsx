@@ -54,13 +54,13 @@ function UploadModal({ defaultPrefix, defaultDirectory, onClose, onSuccess, show
 
     const handleUpload = async () => {
         if (!file || !prefix.trim() || !filename.trim()) {
-            showMessage("error", "请填写 prefix、filename 并选择文件");
+            showMessage("error", "Please fill in prefix and filename, and select a file.");
             return;
         }
 
-        // 检查数据库上传 2MB 限制
+        // Check DB upload 2MB limit
         if (storageType === "db" && file.size > DB_MAX_SIZE) {
-            showMessage("error", "上传到数据库的文件不能超过 2 MB，请选择 R2 存储");
+            showMessage("error", "Files uploaded to the database must be <= 2 MB. Please choose R2 storage.");
             return;
         }
 
@@ -73,7 +73,7 @@ function UploadModal({ defaultPrefix, defaultDirectory, onClose, onSuccess, show
             if (storageType === "db") {
                 await templateAssetsApi.uploadToDb(file, prefix.trim(), cleanFilename, isPublic);
                 setProgress(100);
-                showMessage("success", "上传成功（数据库存储）");
+                showMessage("success", "Upload successful (DB storage)");
             } else if (file.size >= MULTIPART_THRESHOLD) {
                 // 分片上传
                 const createRes = await templateAssetsApi.multipartCreate(
@@ -114,20 +114,20 @@ function UploadModal({ defaultPrefix, defaultDirectory, onClose, onSuccess, show
                 if (completeRes.data.code !== 0) throw new Error(completeRes.data.message);
 
                 setProgress(100);
-                showMessage("success", "分片上传完成（R2 存储）");
+                showMessage("success", "Multipart upload completed (R2 storage)");
             } else {
-                // 普通 R2 上传
+                // Normal R2 upload
                 await templateAssetsApi.uploadToR2(file, prefix.trim(), cleanFilename, isPublic);
                 setProgress(100);
-                showMessage("success", "上传成功（R2 存储）");
+                showMessage("success", "Upload successful (R2 storage)");
             }
 
             onSuccess();
             onClose();
         } catch (error: unknown) {
             const msg = error && typeof error === "object" && "response" in error
-                ? (error.response as { data?: { message?: string } })?.data?.message || "上传失败"
-                : error instanceof Error ? error.message : "上传失败";
+                ? (error.response as { data?: { message?: string } })?.data?.message || "Upload failed"
+                : error instanceof Error ? error.message : "Upload failed";
             showMessage("error", msg);
         } finally {
             setUploading(false);
@@ -137,7 +137,7 @@ function UploadModal({ defaultPrefix, defaultDirectory, onClose, onSuccess, show
     return (
         <div className="modal modal-open">
             <div className="modal-box max-w-lg">
-                <h3 className="font-bold text-lg mb-6">上传资源文件</h3>
+                <h3 className="font-bold text-lg mb-6">Upload Asset File</h3>
 
                 <div className="space-y-4">
                     {/* Prefix */}
@@ -148,17 +148,17 @@ function UploadModal({ defaultPrefix, defaultDirectory, onClose, onSuccess, show
                         <input
                             type="text"
                             className="input input-bordered w-full"
-                            placeholder="例如: my-template"
+                            placeholder="e.g. my-template"
                             value={prefix}
                             onChange={(e) => setPrefix(e.target.value)}
                             disabled={!!defaultPrefix || uploading}
                         />
                     </div>
 
-                    {/* 文件选择 */}
+                    {/* File selection */}
                     <div className="form-control">
                         <label className="label">
-                            <span className="label-text font-medium">选择文件 <span className="text-error">*</span></span>
+                            <span className="label-text font-medium">Select File <span className="text-error">*</span></span>
                         </label>
                         <input
                             type="file"
@@ -169,8 +169,8 @@ function UploadModal({ defaultPrefix, defaultDirectory, onClose, onSuccess, show
                         {file && (
                             <label className="label">
                                 <span className="label-text-alt text-gray-500">
-                                    大小: {formatSize(file.size)}
-                                    {file.size >= MULTIPART_THRESHOLD && " (将使用分片上传)"}
+                                    Size: {formatSize(file.size)}
+                                    {file.size >= MULTIPART_THRESHOLD && " (multipart upload will be used)"}
                                 </span>
                             </label>
                         )}
@@ -184,20 +184,20 @@ function UploadModal({ defaultPrefix, defaultDirectory, onClose, onSuccess, show
                         <input
                             type="text"
                             className="input input-bordered w-full"
-                            placeholder="例如: css/style.css"
+                            placeholder="e.g. css/style.css"
                             value={filename}
                             onChange={(e) => setFilename(e.target.value)}
                             disabled={uploading}
                         />
                         <label className="label">
-                            <span className="label-text-alt text-gray-500">支持目录路径，如 images/logo.png</span>
+                            <span className="label-text-alt text-gray-500">Supports directories, e.g. images/logo.png</span>
                         </label>
                     </div>
 
                     {/* 存储方式 */}
                     <div className="form-control">
                         <label className="label">
-                            <span className="label-text font-medium">存储方式</span>
+                            <span className="label-text font-medium">Storage Type</span>
                         </label>
                         <div className="flex gap-4">
                             <label className="label cursor-pointer gap-2">
@@ -209,7 +209,7 @@ function UploadModal({ defaultPrefix, defaultDirectory, onClose, onSuccess, show
                                     onChange={() => setStorageType("r2")}
                                     disabled={uploading}
                                 />
-                                <span className="label-text">R2 存储</span>
+                                <span className="label-text">R2 Storage</span>
                             </label>
                             <label className="label cursor-pointer gap-2">
                                 <input
@@ -221,14 +221,14 @@ function UploadModal({ defaultPrefix, defaultDirectory, onClose, onSuccess, show
                                     disabled={uploading || (file != null && file.size > DB_MAX_SIZE)}
                                 />
                                 <span className={`label-text ${file && file.size > DB_MAX_SIZE ? "text-gray-400" : ""}`}>
-                                    数据库存储
-                                    {file && file.size > DB_MAX_SIZE && " (文件超过 2MB)"}
+                                    Database Storage
+                                    {file && file.size > DB_MAX_SIZE && " (file exceeds 2MB)"}
                                 </span>
                             </label>
                         </div>
                     </div>
 
-                    {/* 公开访问 */}
+                    {/* Public access */}
                     <div className="form-control">
                         <label className="label cursor-pointer justify-start gap-3">
                             <input
@@ -238,11 +238,11 @@ function UploadModal({ defaultPrefix, defaultDirectory, onClose, onSuccess, show
                                 onChange={(e) => setIsPublic(e.target.checked ? 1 : 0)}
                                 disabled={uploading}
                             />
-                            <span className="label-text">公开访问</span>
+                            <span className="label-text">Public Access</span>
                         </label>
                     </div>
 
-                    {/* 上传进度 */}
+                    {/* Upload progress */}
                     {uploading && (
                         <div className="w-full">
                             <progress
@@ -257,16 +257,16 @@ function UploadModal({ defaultPrefix, defaultDirectory, onClose, onSuccess, show
 
                 <div className="modal-action">
                     <button className="btn btn-ghost" onClick={onClose} disabled={uploading}>
-                        取消
+                        Cancel
                     </button>
                     <button className="btn btn-primary" onClick={handleUpload} disabled={uploading || !file}>
                         {uploading ? (
                             <>
                                 <span className="loading loading-spinner loading-sm" />
-                                上传中...
+                                Uploading...
                             </>
                         ) : (
-                            "上传"
+                            "Upload"
                         )}
                     </button>
                 </div>
@@ -294,7 +294,7 @@ function TreeView({ nodes, onDownload, onDelete, level = 0 }: TreeViewProps) {
 
     if (!nodes.length) {
         return level === 0 ? (
-            <p className="text-gray-500 text-center py-8">暂无文件</p>
+            <p className="text-gray-500 text-center py-8">No files</p>
         ) : null;
     }
 
@@ -351,7 +351,7 @@ function TreeView({ nodes, onDownload, onDelete, level = 0 }: TreeViewProps) {
                                     {node.asset?.storage_type === 1 ? "R2" : "DB"}
                                 </span>
                                 {node.asset?.is_public === 1 && (
-                                    <span className="badge badge-xs badge-success">公开</span>
+                                    <span className="badge badge-xs badge-success">Public</span>
                                 )}
                             </div>
                             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
@@ -359,7 +359,7 @@ function TreeView({ nodes, onDownload, onDelete, level = 0 }: TreeViewProps) {
                                     <>
                                         <button
                                             className="btn btn-xs btn-ghost"
-                                            title="下载"
+                                            title="Download"
                                             onClick={() => onDownload(node.asset!)}
                                         >
                                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -368,7 +368,7 @@ function TreeView({ nodes, onDownload, onDelete, level = 0 }: TreeViewProps) {
                                         </button>
                                         <button
                                             className="btn btn-xs btn-ghost text-error"
-                                            title="删除"
+                                            title="Delete"
                                             onClick={() => onDelete(node.asset!)}
                                         >
                                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -434,7 +434,7 @@ export function TemplateResourcesPage() {
                 showMessage("error", res.data.message);
             }
         } catch {
-            showMessage("error", "加载 prefix 列表失败");
+            showMessage("error", "Failed to load prefix list");
         } finally {
             setPrefixLoading(false);
         }
@@ -452,7 +452,7 @@ export function TemplateResourcesPage() {
                 showMessage("error", res.data.message);
             }
         } catch {
-            showMessage("error", "加载文件树失败");
+            showMessage("error", "Failed to load file tree");
         } finally {
             setTreeLoading(false);
         }
@@ -480,7 +480,7 @@ export function TemplateResourcesPage() {
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
         } catch {
-            showMessage("error", "下载失败");
+            showMessage("error", "Download failed");
         }
     };
 
@@ -491,14 +491,14 @@ export function TemplateResourcesPage() {
             setDeleteLoading(true);
             const res = await templateAssetsApi.delete(deletingAsset.id);
             if (res.data.code === 0) {
-                showMessage("success", "删除成功");
+                showMessage("success", "Deleted successfully");
                 setDeletingAsset(null);
                 if (currentPrefix) loadTree(currentPrefix);
             } else {
                 showMessage("error", res.data.message);
             }
         } catch {
-            showMessage("error", "删除失败");
+            showMessage("error", "Delete failed");
         } finally {
             setDeleteLoading(false);
         }
@@ -523,7 +523,7 @@ export function TemplateResourcesPage() {
             setDeletePrefixLoading(true);
             const res = await templateAssetsApi.deleteByPrefix(deletingPrefix.asset_prefix);
             if (res.data.code === 0) {
-                showMessage("success", `已删除 "${deletingPrefix.asset_prefix}" 下的所有资源`);
+                showMessage("success", `Deleted all assets under "${deletingPrefix.asset_prefix}"`);
                 setDeletingPrefix(null);
                 // 如果当前正在查看该 prefix 的详情，则返回列表
                 if (currentPrefix === deletingPrefix.asset_prefix) {
@@ -534,7 +534,7 @@ export function TemplateResourcesPage() {
                 showMessage("error", res.data.message);
             }
         } catch {
-            showMessage("error", "删除 prefix 失败");
+            showMessage("error", "Failed to delete prefix");
         } finally {
             setDeletePrefixLoading(false);
         }
@@ -548,7 +548,7 @@ export function TemplateResourcesPage() {
 
     return (
         <div className="p-6">
-            {/* 消息提示 */}
+            {/* Toast message */}
             {message && (
                 <div className="toast toast-top toast-center z-50">
                     <div className={`alert ${
@@ -569,16 +569,16 @@ export function TemplateResourcesPage() {
                 </div>
             )}
 
-            {/* ========= Prefix 列表视图 ========= */}
+            {/* ========= Prefix List View ========= */}
             {currentPrefix === null ? (
                 <>
                     <div className="flex justify-between items-center mb-6">
                         <div>
-                            <h1 className="text-2xl font-bold">模板资源管理</h1>
-                            <p className="text-sm text-gray-500 mt-1">共 {prefixes.length} 个资源组</p>
+                            <h1 className="text-2xl font-bold">Template Asset Manager</h1>
+                            <p className="text-sm text-gray-500 mt-1">Total {prefixes.length} asset groups</p>
                         </div>
                         <button className="btn btn-primary" onClick={() => openUpload()}>
-                            + 上传资源
+                            + Upload Asset
                         </button>
                     </div>
 
@@ -591,7 +591,7 @@ export function TemplateResourcesPage() {
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto mb-4 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
                             </svg>
-                            <p className="text-lg">暂无资源，点击上方按钮上传</p>
+                            <p className="text-lg">No assets yet. Click the button above to upload.</p>
                         </div>
                     ) : (
                         <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
@@ -611,12 +611,12 @@ export function TemplateResourcesPage() {
                                                     {p.asset_prefix}
                                                 </h2>
                                                 <p className="text-sm text-gray-500">
-                                                    {p.file_count} 个文件 · {formatSize(p.total_size)}
+                                                    {p.file_count} files · {formatSize(p.total_size)}
                                                 </p>
                                             </div>
                                             <button
                                                 className="btn btn-ghost btn-sm text-error opacity-0 group-hover:opacity-100 hover:bg-error/10"
-                                                title="删除整个 prefix"
+                                                title="Delete entire prefix"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     setDeletingPrefix(p);
@@ -637,7 +637,7 @@ export function TemplateResourcesPage() {
                     )}
                 </>
             ) : (
-                /* ========= Prefix 详情视图（树结构） ========= */
+                /* ========= Prefix Detail View (Tree) ========= */
                 <>
                     <div className="flex justify-between items-center mb-6">
                         <div className="flex items-center gap-3">
@@ -645,11 +645,11 @@ export function TemplateResourcesPage() {
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                                 </svg>
-                                返回
+                                Back
                             </button>
                             <div>
                                 <h1 className="text-2xl font-bold font-mono">{currentPrefix}</h1>
-                                <p className="text-sm text-gray-500 mt-0.5">共 {treeTotal} 个文件</p>
+                                <p className="text-sm text-gray-500 mt-0.5">Total {treeTotal} files</p>
                             </div>
                         </div>
                         <div className="flex gap-2">
@@ -664,10 +664,10 @@ export function TemplateResourcesPage() {
                                     });
                                 }}
                             >
-                                删除全部
+                                Delete All
                             </button>
                             <button className="btn btn-primary" onClick={() => openUpload()}>
-                                + 上传资源
+                                + Upload Asset
                             </button>
                         </div>
                     </div>
@@ -688,7 +688,7 @@ export function TemplateResourcesPage() {
                 </>
             )}
 
-            {/* 上传弹窗 */}
+            {/* Upload modal */}
             {showUpload && (
                 <UploadModal
                     defaultPrefix={currentPrefix || undefined}
@@ -705,16 +705,16 @@ export function TemplateResourcesPage() {
                 />
             )}
 
-            {/* 删除确认弹窗 */}
+            {/* Delete confirmation modal */}
             {deletingAsset && (
                 <div className="modal modal-open">
                     <div className="modal-box">
-                        <h3 className="font-bold text-lg mb-4">确认删除</h3>
+                        <h3 className="font-bold text-lg mb-4">Confirm Deletion</h3>
                         <p className="py-2">
-                            确定要删除文件 <span className="font-mono font-bold">"{deletingAsset.filename}"</span> 吗？
+                            Are you sure you want to delete file <span className="font-mono font-bold">"{deletingAsset.filename}"</span>?
                         </p>
                         <p className="text-sm text-gray-500">
-                            存储类型: {deletingAsset.storage_type === 1 ? "R2" : "数据库"} · 大小: {formatSize(deletingAsset.size)}
+                            Storage: {deletingAsset.storage_type === 1 ? "R2" : "Database"} · Size: {formatSize(deletingAsset.size)}
                         </p>
                         <div className="modal-action">
                             <button
@@ -722,7 +722,7 @@ export function TemplateResourcesPage() {
                                 onClick={() => setDeletingAsset(null)}
                                 disabled={deleteLoading}
                             >
-                                取消
+                                Cancel
                             </button>
                             <button
                                 className="btn btn-error"
@@ -732,10 +732,10 @@ export function TemplateResourcesPage() {
                                 {deleteLoading ? (
                                     <>
                                         <span className="loading loading-spinner loading-sm" />
-                                        删除中...
+                                        Deleting...
                                     </>
                                 ) : (
-                                    "确认删除"
+                                    "Confirm Delete"
                                 )}
                             </button>
                         </div>
@@ -744,26 +744,26 @@ export function TemplateResourcesPage() {
                 </div>
             )}
 
-            {/* 删除 prefix 确认弹窗 */}
+            {/* Delete prefix confirmation modal */}
             {deletingPrefix && (
                 <div className="modal modal-open">
                     <div className="modal-box">
-                        <h3 className="font-bold text-lg mb-4 text-error">⚠️ 删除整个资源组</h3>
+                        <h3 className="font-bold text-lg mb-4 text-error">⚠️ Delete Entire Asset Group</h3>
                         <p className="py-2">
-                            确定要删除资源组 <span className="font-mono font-bold">"{deletingPrefix.asset_prefix}"</span> 下的所有文件吗？
+                            Are you sure you want to delete all files under <span className="font-mono font-bold">"{deletingPrefix.asset_prefix}"</span>?
                         </p>
                         <p className="text-sm text-gray-500">
-                            共 {deletingPrefix.file_count} 个文件
-                            {deletingPrefix.total_size != null && ` · 总大小: ${formatSize(deletingPrefix.total_size)}`}
+                            Total {deletingPrefix.file_count} files
+                            {deletingPrefix.total_size != null && ` · Total size: ${formatSize(deletingPrefix.total_size)}`}
                         </p>
-                        <p className="text-sm text-error mt-2">此操作不可恢复！</p>
+                        <p className="text-sm text-error mt-2">This action cannot be undone!</p>
                         <div className="modal-action">
                             <button
                                 className="btn btn-ghost"
                                 onClick={() => setDeletingPrefix(null)}
                                 disabled={deletePrefixLoading}
                             >
-                                取消
+                                Cancel
                             </button>
                             <button
                                 className="btn btn-error"
@@ -773,10 +773,10 @@ export function TemplateResourcesPage() {
                                 {deletePrefixLoading ? (
                                     <>
                                         <span className="loading loading-spinner loading-sm" />
-                                        删除中...
+                                        Deleting...
                                     </>
                                 ) : (
-                                    "确认删除全部"
+                                    "Confirm Delete All"
                                 )}
                             </button>
                         </div>

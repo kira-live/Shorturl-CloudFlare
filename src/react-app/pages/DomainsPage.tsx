@@ -16,18 +16,18 @@ export function DomainsPage() {
     const [total, setTotal] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
 
-    // 消息提示状态
+    // Message toast state
     const [message, setMessage] = useState<Message | null>(null);
 
-    // 弹窗状态
+    // Modal state
     const [showModal, setShowModal] = useState(false);
     const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
     const [editingDomain, setEditingDomain] = useState<Domain | null>(null);
 
-    // 删除确认弹窗
+    // Delete confirmation modal
     const [deletingDomain, setDeletingDomain] = useState<Domain | null>(null);
 
-    // 表单数据
+    // Form data
     const [formData, setFormData] = useState<CreateDomainRequest>({
         host: '',
         is_active: 1,
@@ -38,36 +38,36 @@ export function DomainsPage() {
         interstitial_template_id: undefined,
     });
 
-    // 模板选择选项
+    // Template select options
     const [templateOptions, setTemplateOptions] = useState<Array<{id: number; name: string; type: number | null; content_type: number; is_active: number}>>([]);
 
-    // 显示消息
+    // Show message
     const showMessage = (type: MessageType, text: string) => {
         setMessage({ type, text });
         setTimeout(() => setMessage(null), 5000);
     };
 
-    // 加载域名列表
+    // Load domain list
     const loadDomains = async () => {
         try {
             setLoading(true);
             const res = await domainApi.getList(page, pageSize);
             if (res.data.code === 0) {
-                // 按ID降序排序（最新的在前面）
+                // Sort by ID descending (newest first)
                 const sortedDomains = res.data.data.results.sort((a, b) => a.id - b.id);
                 setDomains(sortedDomains);
                 setTotal(res.data.data.pagination.total);
                 setTotalPages(res.data.data.pagination.totalPages);
             }
         } catch (error) {
-            console.error('加载域名列表失败:', error);
-            showMessage('error', '加载域名列表失败');
+            console.error('Failed to load domain list:', error);
+            showMessage('error', 'Failed to load domain list');
         } finally {
             setLoading(false);
         }
     };
 
-    // 加载模板选项
+    // Load template options
     const loadTemplateOptions = async () => {
         try {
             const res = await templateApi.getSelectOptions();
@@ -75,7 +75,7 @@ export function DomainsPage() {
                 setTemplateOptions(res.data.data);
             }
         } catch (error) {
-            console.error('加载模板选项失败:', error);
+            console.error('Failed to load domain option:', error);
         }
     };
 
@@ -84,7 +84,7 @@ export function DomainsPage() {
         loadTemplateOptions();
     }, [page]);
 
-    // 打开创建弹窗
+    // Open create modal
     const handleCreate = () => {
         setModalMode('create');
         setFormData({
@@ -99,7 +99,7 @@ export function DomainsPage() {
         setShowModal(true);
     };
 
-    // 打开编辑弹窗
+    // Open edit modal
     const handleEdit = (domain: Domain) => {
         setModalMode('edit');
         setEditingDomain(domain);
@@ -115,12 +115,12 @@ export function DomainsPage() {
         setShowModal(true);
     };
 
-    // 提交表单
+    // Submit form
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
         if (!formData.host.trim()) {
-            showMessage('error', '请输入域名');
+            showMessage('error', 'please enter a valid host');
             return;
         }
 
@@ -130,11 +130,11 @@ export function DomainsPage() {
             if (modalMode === 'create') {
                 const res = await domainApi.create(formData);
                 if (res.data.code === 0) {
-                    showMessage('success', '创建成功');
+                    showMessage('success', 'success');
                     setShowModal(false);
                     loadDomains();
                 } else {
-                    showMessage('error', res.data.message || '创建失败');
+                    showMessage('error', res.data.message || 'fail');
                 }
             } else if (editingDomain) {
                 const updateData: UpdateDomainRequest = {
@@ -148,60 +148,60 @@ export function DomainsPage() {
                 };
                 const res = await domainApi.update(editingDomain.id, updateData);
                 if (res.data.code === 0) {
-                    showMessage('success', '更新成功');
+                    showMessage('success', 'success');
                     setShowModal(false);
                     loadDomains();
                 } else {
-                    showMessage('error', res.data.message || '更新失败');
+                    showMessage('error', res.data.message || 'fail');
                 }
             }
         } catch (error: unknown) {
             const message = error && typeof error === 'object' && 'response' in error
-                ? (error.response as { data?: { message?: string } })?.data?.message || '操作失败'
-                : '操作失败';
+                ? (error.response as { data?: { message?: string } })?.data?.message || 'fail'
+                : 'fail';
             showMessage('error', message);
         } finally {
             setLoading(false);
         }
     };
 
-    // 删除域名
+    // Delete domain
     const handleDelete = async (domain: Domain) => {
         try {
             setLoading(true);
             const res = await domainApi.delete(domain.id);
             if (res.data.code === 0) {
-                showMessage('success', '删除成功');
+                showMessage('success', 'success');
                 setDeletingDomain(null);
                 loadDomains();
             } else {
-                showMessage('error', res.data.message || '删除失败');
+                showMessage('error', res.data.message || 'fail');
             }
         } catch (error: unknown) {
             const message = error && typeof error === 'object' && 'response' in error
-                ? (error.response as { data?: { message?: string } })?.data?.message || '删除失败'
-                : '删除失败';
+                ? (error.response as { data?: { message?: string } })?.data?.message || 'fail'
+                : 'fail';
             showMessage('error', message);
         } finally {
             setLoading(false);
         }
     };
 
-    // 格式化时间
+    // Format time
     const formatTime = (timestamp: number) => {
         return new Date(timestamp * 1000).toLocaleString('zh-CN');
     };
 
-    // 获取模板名称
+    // Get template name
     const getTemplateName = (templateId: number | null) => {
         if (!templateId) return '-';
         const template = templateOptions.find(t => t.id === templateId);
-        return template ? template.name : `模板 #${templateId}`;
+        return template ? template.name : `template #${templateId}`;
     };
 
     return (
         <div className="p-6">
-            {/* 消息提示 */}
+            {/* Message toast */}
             {message && (
                 <div className="toast toast-top toast-center z-50">
                     <div className={`alert ${
@@ -225,33 +225,33 @@ export function DomainsPage() {
 
             <div className="flex justify-between items-center mb-6">
                 <div>
-                    <h1 className="text-2xl font-bold">域名管理</h1>
-                    <p className="text-sm text-gray-500 mt-1">共 {total} 个域名</p>
+                    <h1 className="text-2xl font-bold">Domain Management</h1>
+                    <p className="text-sm text-gray-500 mt-1"> {total} domains</p>
                 </div>
                 <button 
                     className="btn btn-primary"
                     onClick={handleCreate}
                     disabled={loading}
                 >
-                    + 添加域名
+                    + add domain
                 </button>
             </div>
 
-            {/* 域名列表 */}
+            {/* Domain list */}
             <div className="overflow-x-auto bg-base-100 rounded-lg shadow">
                 <table className="table table-zebra w-full">
                     <thead>
                         <tr>
                             <th>ID</th>
-                            <th>域名</th>
-                            <th>状态</th>
-                            <th>默认</th>
-                            <th>错误页模板</th>
-                            <th>密码页模板</th>
-                            <th>中间页模板</th>
-                            <th>备注</th>
-                            <th>创建时间</th>
-                            <th>操作</th>
+                            <th>domain</th>
+                            <th>status</th>
+                            <th>default</th>
+                            <th>error page</th>
+                            <th>password page</th>
+                            <th>middle page</th>
+                            <th>remark</th>
+                            <th>create time</th>
+                            <th>action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -264,7 +264,7 @@ export function DomainsPage() {
                         ) : domains.length === 0 ? (
                             <tr>
                                 <td colSpan={10} className="text-center py-8 text-gray-500">
-                                    暂无域名
+                                    no domains
                                 </td>
                             </tr>
                         ) : (
@@ -274,12 +274,12 @@ export function DomainsPage() {
                                     <td className="font-mono">{domain.host}</td>
                                     <td>
                                         <span className={`badge ${domain.is_active ? 'badge-success' : 'badge-error'}`}>
-                                            {domain.is_active ? '启用' : '禁用'}
+                                            {domain.is_active ? 'enable' : 'disable'}
                                         </span>
                                     </td>
                                     <td>
                                         {domain.is_default ? (
-                                            <span className="badge badge-primary">默认</span>
+                                            <span className="badge badge-primary">default</span>
                                         ) : (
                                             <span className="text-gray-400">-</span>
                                         )}
@@ -304,7 +304,7 @@ export function DomainsPage() {
                                                 onClick={() => handleEdit(domain)}
                                                 disabled={loading}
                                             >
-                                                编辑
+                                                edit
                                             </button>
                                             <button
                                                 className={`btn btn-sm ${
@@ -315,7 +315,7 @@ export function DomainsPage() {
                                                 onClick={() => setDeletingDomain(domain)}
                                                 disabled={loading || domain.is_default === 1}
                                             >
-                                                删除
+                                                delete
                                             </button>
                                         </div>
                                     </td>
@@ -326,7 +326,7 @@ export function DomainsPage() {
                 </table>
             </div>
 
-            {/* 分页 */}
+            {/* Pagination */}
             {totalPages > 1 && (
                 <div className="flex justify-center mt-6">
                     <div className="join">
@@ -338,7 +338,7 @@ export function DomainsPage() {
                             «
                         </button>
                         <button className="join-item btn">
-                            第 {page} / {totalPages} 页
+                             {page} / {totalPages}
                         </button>
                         <button
                             className="join-item btn"
@@ -351,13 +351,13 @@ export function DomainsPage() {
                 </div>
             )}
 
-            {/* 删除确认弹窗 */}
+            {/* Delete confirmation modal */}
             {deletingDomain && (
                 <div className="modal modal-open">
                     <div className="modal-box">
-                        <h3 className="font-bold text-lg mb-4">确认删除</h3>
+                        <h3 className="font-bold text-lg mb-4">Delete</h3>
                         <p className="py-4">
-                            确定要删除域名 <span className="font-mono font-bold">"{deletingDomain.host}"</span> 吗？
+                            delete <span className="font-mono font-bold">"{deletingDomain.host}"</span>
                         </p>
                         <div className="modal-action">
                             <button
@@ -365,7 +365,7 @@ export function DomainsPage() {
                                 onClick={() => setDeletingDomain(null)}
                                 disabled={loading}
                             >
-                                取消
+                                cancel
                             </button>
                             <button
                                 className="btn btn-error"
@@ -375,10 +375,10 @@ export function DomainsPage() {
                                 {loading ? (
                                     <>
                                         <span className="loading loading-spinner loading-sm"></span>
-                                        删除中...
+                                        deleting
                                     </>
                                 ) : (
-                                    '确认删除'
+                                    'confirm'
                                 )}
                             </button>
                         </div>
@@ -387,22 +387,22 @@ export function DomainsPage() {
                 </div>
             )}
 
-            {/* 创建/编辑弹窗 */}
+            {/* Create/Edit modal */}
             {showModal && (
                 <div className="modal modal-open">
                     <div className="modal-box max-w-lg">
                         <h3 className="font-bold text-lg mb-6">
-                            {modalMode === 'create' ? '添加域名' : '编辑域名'}
+                            {modalMode === 'create' ? 'add domain' : 'edit domain'}
                         </h3>
                     
                         <form onSubmit={handleSubmit} className="space-y-5">
                             <div className="form-control">
                                 <label className="label">
-                                    <span className="label-text font-medium">域名 <span className="text-error">*</span></span>
+                                    <span className="label-text font-medium">domain <span className="text-error">*</span></span>
                                 </label>
                                 <input
                                     type="text"
-                                    placeholder="例如: example.com"
+                                    placeholder="example.com"
                                     className="input input-bordered w-full focus:input-primary"
                                     value={formData.host}
                                     onChange={(e) => setFormData({ ...formData, host: e.target.value })}
@@ -410,17 +410,17 @@ export function DomainsPage() {
                                     autoFocus
                                 />
                                 <label className="label">
-                                    <span className="label-text-alt text-gray-500">请输入完整的域名</span>
+                                    <span className="label-text-alt text-gray-500">please input full domain</span>
                                 </label>
                             </div>
 
                             <div className="form-control">
                                 <label className="label">
-                                    <span className="label-text font-medium">备注</span>
+                                    <span className="label-text font-medium">Notes</span>
                                 </label>
                                 <textarea
                                     className="textarea textarea-bordered w-full focus:textarea-primary resize-none"
-                                    placeholder="可选备注信息"
+                                    placeholder="Optional notes"
                                     value={formData.notes}
                                     onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                                     rows={3}
@@ -429,15 +429,15 @@ export function DomainsPage() {
 
                             <div className="divider my-2"></div>
 
-                            {/* 模板选择 */}
+                            {/* Template selection */}
                             <div className="space-y-4">
-                                <h4 className="font-medium text-base-content">模板设置</h4>
-                                <p className="text-sm text-gray-500">为该域名配置专用模板，留空则使用系统默认模板</p>
+                                <h4 className="font-medium text-base-content">Template Settings</h4>
+                                <p className="text-sm text-gray-500">Assign a dedicated template to this domain. Leave empty to use the system default.</p>
 
                                 <div className="grid grid-cols-1 gap-4">
                                     <div className="form-control">
                                         <label className="label">
-                                            <span className="label-text font-medium">错误页模板</span>
+                                            <span className="label-text font-medium">Error Page Template</span>
                                         </label>
                                         <select
                                             className="select select-bordered w-full focus:select-primary"
@@ -447,12 +447,12 @@ export function DomainsPage() {
                                                 error_template_id: e.target.value ? Number(e.target.value) : undefined
                                             })}
                                         >
-                                            <option value="">使用系统默认</option>
+                                            <option value="">Use system default</option>
                                             {templateOptions
                                                 .filter(t => t.type === 2 || t.type === null || t.type === 0)
                                                 .map(template => (
                                                 <option key={template.id} value={template.id}>
-                                                    {template.name} {template.type === 2 ? '(错误页)' : ''}
+                                                    {template.name} {template.type === 2 ? '(Error Page)' : ''}
                                                 </option>
                                             ))}
                                         </select>
@@ -460,7 +460,7 @@ export function DomainsPage() {
 
                                     <div className="form-control">
                                         <label className="label">
-                                            <span className="label-text font-medium">密码验证页模板</span>
+                                            <span className="label-text font-medium">Password Verification Template</span>
                                         </label>
                                         <select
                                             className="select select-bordered w-full focus:select-primary"
@@ -470,12 +470,12 @@ export function DomainsPage() {
                                                 password_template_id: e.target.value ? Number(e.target.value) : undefined
                                             })}
                                         >
-                                            <option value="">使用系统默认</option>
+                                            <option value="">Use system default</option>
                                             {templateOptions
                                                 .filter(t => t.type === 1 || t.type === null || t.type === 0)
                                                 .map(template => (
                                                 <option key={template.id} value={template.id}>
-                                                    {template.name} {template.type === 1 ? '(密码页)' : ''}
+                                                    {template.name} {template.type === 1 ? '(Password Page)' : ''}
                                                 </option>
                                             ))}
                                         </select>
@@ -483,7 +483,7 @@ export function DomainsPage() {
 
                                     <div className="form-control">
                                         <label className="label">
-                                            <span className="label-text font-medium">中间页模板</span>
+                                            <span className="label-text font-medium">Interstitial Page Template</span>
                                         </label>
                                         <select
                                             className="select select-bordered w-full focus:select-primary"
@@ -493,7 +493,7 @@ export function DomainsPage() {
                                                 interstitial_template_id: e.target.value ? Number(e.target.value) : undefined
                                             })}
                                         >
-                                            <option value="">使用系统默认</option>
+                                            <option value="">Use system default</option>
                                             {templateOptions
                                                 .filter(t => t.type === null || t.type === 0)
                                                 .map(template => (
@@ -521,8 +521,8 @@ export function DomainsPage() {
                                             })}
                                         />
                                         <div className="flex flex-col">
-                                            <span className="label-text font-medium">启用该域名</span>
-                                            <span className="label-text-alt text-gray-500">启用后该域名可用于生成短链接</span>
+                                            <span className="label-text font-medium">Enable this domain</span>
+                                            <span className="label-text-alt text-gray-500">When enabled, this domain can be used to generate short links</span>
                                         </div>
                                     </label>
                                 </div>
@@ -545,12 +545,12 @@ export function DomainsPage() {
                                         />
                                         <div className="flex flex-col">
                                             <span className="label-text font-medium">
-                                                设为默认域名
+                                                Set as default domain
                                                 {editingDomain?.is_default === 1 && formData.is_default === 1 && (
-                                                    <span className="ml-2 text-xs text-warning">(必须保留至少一个默认域名)</span>
+                                                    <span className="ml-2 text-xs text-warning">(At least one default domain must be kept)</span>
                                                 )}
                                             </span>
-                                            <span className="label-text-alt text-gray-500">默认域名将优先用于生成短链接</span>
+                                            <span className="label-text-alt text-gray-500">The default domain will be preferred when generating short links</span>
                                         </div>
                                     </label>
                                 </div>
@@ -563,7 +563,7 @@ export function DomainsPage() {
                                     onClick={() => setShowModal(false)}
                                     disabled={loading}
                                 >
-                                    取消
+                                    Cancel
                                 </button>
                                 <button
                                     type="submit"
@@ -573,10 +573,10 @@ export function DomainsPage() {
                                     {loading ? (
                                         <>
                                             <span className="loading loading-spinner loading-sm"></span>
-                                            提交中...
+                                            Submitting...
                                         </>
                                     ) : (
-                                        modalMode === 'create' ? '创建' : '保存'
+                                        modalMode === 'create' ? 'Create' : 'Save'
                                     )}
                                 </button>
                             </div>

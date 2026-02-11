@@ -66,7 +66,7 @@ function TagInput({
                 <input
                     type="text"
                     className="input input-bordered input-sm flex-1"
-                    placeholder="输入标签后回车"
+                    placeholder="Press Enter to add a tag"
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={(e) => {
@@ -81,7 +81,7 @@ function TagInput({
                     className="btn btn-sm btn-outline"
                     onClick={addTag}
                 >
-                    添加
+                    Add
                 </button>
             </div>
         </div>
@@ -159,7 +159,7 @@ export function ShortLinksPage() {
                 setDomains(res.data.data.results);
             }
         } catch (e) {
-            console.error("加载域名失败:", e);
+            console.error("Failed to load domains:", e);
         }
     }, []);
 
@@ -171,7 +171,7 @@ export function ShortLinksPage() {
                 setTemplateOptions(res.data.data);
             }
         } catch (e) {
-            console.error("加载模板选项失败:", e);
+            console.error("Failed to load template options:", e);
         }
     }, []);
 
@@ -205,8 +205,8 @@ export function ShortLinksPage() {
                 });
             }
         } catch (e) {
-            console.error("加载短链接列表失败:", e);
-            showMessage("error", "加载短链接列表失败");
+            console.error("Failed to load short links list:", e);
+            showMessage("error", "Failed to load short links list");
         } finally {
             setLoading(false);
         }
@@ -281,11 +281,11 @@ export function ShortLinksPage() {
         e.preventDefault();
 
         if (!formData.target_url.trim()) {
-            showMessage("error", "请输入目标 URL");
+            showMessage("error", "Please enter the target URL");
             return;
         }
         if (!formData.domain_id) {
-            showMessage("error", "请选择域名");
+            showMessage("error", "Please select a domain");
             return;
         }
 
@@ -294,28 +294,28 @@ export function ShortLinksPage() {
             if (modalMode === "create") {
                 const res = await shortLinkApi.create(formData);
                 if (res.data.code === 0) {
-                    showMessage("success", "短链接创建成功");
+                    showMessage("success", "Short link created successfully");
                     setShowModal(false);
                     loadLinks();
                 } else {
-                    showMessage("error", res.data.message || "创建失败");
+                    showMessage("error", res.data.message || "Create failed");
                 }
             } else if (editingLink) {
                 const updateData: UpdateShortLinkRequest = { ...formData };
                 const res = await shortLinkApi.update(editingLink.id, updateData);
                 if (res.data.code === 0) {
-                    showMessage("success", "短链接更新成功");
+                    showMessage("success", "Short link updated successfully");
                     setShowModal(false);
                     loadLinks();
                 } else {
-                    showMessage("error", res.data.message || "更新失败");
+                    showMessage("error", res.data.message || "Update failed");
                 }
             }
         } catch (error: unknown) {
             const msg =
                 error && typeof error === "object" && "response" in error
-                    ? (error.response as { data?: { message?: string } })?.data?.message || "操作失败"
-                    : "操作失败";
+                    ? (error.response as { data?: { message?: string } })?.data?.message || "Operation failed"
+                    : "Operation failed";
             showMessage("error", msg);
         } finally {
             setLoading(false);
@@ -328,17 +328,17 @@ export function ShortLinksPage() {
             setLoading(true);
             const res = await shortLinkApi.delete(link.id);
             if (res.data.code === 0) {
-                showMessage("success", "删除成功");
+                showMessage("success", "Deleted successfully");
                 setDeletingLink(null);
                 loadLinks();
             } else {
-                showMessage("error", res.data.message || "删除失败");
+                showMessage("error", res.data.message || "Delete failed");
             }
         } catch (error: unknown) {
             const msg =
                 error && typeof error === "object" && "response" in error
-                    ? (error.response as { data?: { message?: string } })?.data?.message || "删除失败"
-                    : "删除失败";
+                    ? (error.response as { data?: { message?: string } })?.data?.message || "Delete failed"
+                    : "Delete failed";
             showMessage("error", msg);
         } finally {
             setLoading(false);
@@ -353,10 +353,10 @@ export function ShortLinksPage() {
                 showMessage("success", res.data.message);
                 loadLinks();
             } else {
-                showMessage("error", res.data.message || "操作失败");
+                showMessage("error", res.data.message || "Operation failed");
             }
         } catch {
-            showMessage("error", "操作失败");
+            showMessage("error", "Operation failed");
         }
     };
 
@@ -379,7 +379,7 @@ export function ShortLinksPage() {
 
     const formatTime = (timestamp: number | null) => {
         if (!timestamp) return "-";
-        return new Date(timestamp * 1000).toLocaleString("zh-CN");
+        return new Date(timestamp * 1000).toLocaleString("en-US");
     };
 
     // 将 expire_at (Unix 时间戳) 转为 datetime-local 输入值
@@ -405,7 +405,7 @@ export function ShortLinksPage() {
 
     return (
         <div className="p-6">
-            {/* 消息提示 */}
+            {/* Message */}
             {message && (
                 <div className="toast toast-top toast-center z-50">
                     <div
@@ -451,39 +451,39 @@ export function ShortLinksPage() {
                 </div>
             )}
 
-            {/* 标题 & 新增按钮 */}
+            {/* Title & Create button */}
             <div className="flex justify-between items-center mb-6">
                 <div>
-                    <h1 className="text-2xl font-bold">短链接管理</h1>
-                    <p className="text-sm text-gray-500 mt-1">共 {total} 条短链接</p>
+                    <h1 className="text-2xl font-bold">Short Link Management</h1>
+                    <p className="text-sm text-gray-500 mt-1">{total} short links total</p>
                 </div>
                 <button className="btn btn-primary" onClick={handleCreate} disabled={loading}>
-                    + 新建短链接
+                    + New Short Link
                 </button>
             </div>
 
-            {/* 筛选栏 */}
+            {/* Filters */}
             <div className="bg-base-100 rounded-lg shadow p-4 mb-4">
                 <div className="flex flex-wrap gap-3 items-end">
-                    {/* 关键词搜索 */}
+                    {/* Keyword search */}
                     <div className="form-control">
                         <label className="label py-1">
-                            <span className="label-text text-xs">搜索</span>
+                            <span className="label-text text-xs">Search</span>
                         </label>
                         <input
                             type="text"
                             className="input input-bordered input-sm w-48 ml-2"
-                            placeholder="短码/目标URL/备注"
+                            placeholder="Short code / Target URL / Notes"
                             value={filterKeyword}
                             onChange={(e) => setFilterKeyword(e.target.value)}
                             onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                         />
                     </div>
 
-                    {/* 域名筛选 */}
+                    {/* Domain filter */}
                     <div className="form-control">
                         <label className="label py-1">
-                            <span className="label-text text-xs">域名</span>
+                            <span className="label-text text-xs">Domain</span>
                         </label>
                         <select
                             className="select select-bordered select-sm w-40 ml-2"
@@ -493,7 +493,7 @@ export function ShortLinksPage() {
                                 setPage(1);
                             }}
                         >
-                            <option value="">全部域名</option>
+                            <option value="">All domains</option>
                             {domains.map((d) => (
                                 <option key={d.id} value={d.id}>
                                     {d.host}
@@ -502,10 +502,10 @@ export function ShortLinksPage() {
                         </select>
                     </div>
 
-                    {/* 标签筛选 */}
+                    {/* Tag filter */}
                     <div className="form-control">
                         <label className="label py-1">
-                            <span className="label-text text-xs">标签</span>
+                            <span className="label-text text-xs">Tags</span>
                         </label>
                         <select
                             className="select select-bordered select-sm w-36 ml-2"
@@ -515,7 +515,7 @@ export function ShortLinksPage() {
                                 setPage(1);
                             }}
                         >
-                            <option value="">全部标签</option>
+                            <option value="">All tags</option>
                             {allTags.map((tag) => (
                                 <option key={tag} value={tag}>
                                     {tag}
@@ -524,10 +524,10 @@ export function ShortLinksPage() {
                         </select>
                     </div>
 
-                    {/* 状态筛选 */}
+                    {/* Status filter */}
                     <div className="form-control">
                         <label className="label py-1">
-                            <span className="label-text text-xs">状态</span>
+                            <span className="label-text text-xs">Status</span>
                         </label>
                         <select
                             className="select select-bordered select-sm w-28 ml-2"
@@ -537,16 +537,16 @@ export function ShortLinksPage() {
                                 setPage(1);
                             }}
                         >
-                            <option value="">全部</option>
-                            <option value="0">启用</option>
-                            <option value="1">禁用</option>
+                            <option value="">All</option>
+                            <option value="0">Enabled</option>
+                            <option value="1">Disabled</option>
                         </select>
                     </div>
 
-                    {/* 排序 */}
+                    {/* Sort */}
                     <div className="form-control">
                         <label className="label py-1">
-                            <span className="label-text text-xs">排序</span>
+                            <span className="label-text text-xs">Sort</span>
                         </label>
                         <div className="flex gap-1">
                             <select
@@ -554,46 +554,46 @@ export function ShortLinksPage() {
                                 value={orderBy}
                                 onChange={(e) => setOrderBy(e.target.value)}
                             >
-                                <option value="created_at">创建时间</option>
-                                <option value="updated_at">更新时间</option>
-                                <option value="total_clicks">点击量</option>
-                                <option value="last_access_at">最后访问</option>
+                                <option value="created_at">Created time</option>
+                                <option value="updated_at">Updated time</option>
+                                <option value="total_clicks">Clicks</option>
+                                <option value="last_access_at">Last access</option>
                             </select>
                             <button
                                 className="btn btn-sm btn-outline"
                                 onClick={() => setOrderDir((d) => (d === "desc" ? "asc" : "desc"))}
-                                title={orderDir === "desc" ? "降序" : "升序"}
+                                title={orderDir === "desc" ? "Descending" : "Ascending"}
                             >
                                 {orderDir === "desc" ? "↓" : "↑"}
                             </button>
                         </div>
                     </div>
 
-                    {/* 操作按钮 */}
+                    {/* Actions */}
                     <div className="flex gap-2 ml-auto">
                         <button className="btn btn-sm btn-ghost" onClick={handleResetFilters}>
-                            重置
+                            Reset
                         </button>
                         <button className="btn btn-sm btn-primary" onClick={handleSearch}>
-                            搜索
+                            Search
                         </button>
                     </div>
                 </div>
             </div>
 
-            {/* 列表 */}
+            {/* List */}
             <div className="bg-base-100 rounded-lg shadow">
                 {loading && links.length === 0 ? (
                     <div className="text-center py-12">
                         <span className="loading loading-spinner loading-lg"></span>
                     </div>
                 ) : links.length === 0 ? (
-                    <div className="text-center py-12 text-gray-500">暂无短链接</div>
+                    <div className="text-center py-12 text-gray-500">No short links</div>
                 ) : (
                     <div className="divide-y divide-base-200">
                         {links.map((link) => (
                             <div key={link.id} className="px-5 py-5 hover:bg-base-200/50 transition-colors">
-                                {/* 第一行：短链接 + 状态 + 操作 */}
+                                {/* Row 1: short link + status + actions */}
                                 <div className="flex items-center justify-between mb-3">
                                     <div className="flex items-center gap-3">
                                         <span className="text-xs text-gray-400 font-mono">#{link.id}</span>
@@ -605,18 +605,18 @@ export function ShortLinksPage() {
                                         >
                                             {link.domain_host}/{link.code}
                                         </a>
-                                        <span className={`badge badge-sm ${link.is_disabled === 0 ? 'badge-success' : 'badge-error'}`}>
-                                            {link.is_disabled === 0 ? '启用' : '禁用'}
+                                        <span className={`badge badge-sm ${link.is_disabled === 0 ? "badge-success" : "badge-error"}`}>
+                                            {link.is_disabled === 0 ? "Enabled" : "Disabled"}
                                         </span>
                                         {link.password && (
-                                            <span className="badge badge-sm badge-warning">🔒 密码保护</span>
+                                            <span className="badge badge-sm badge-warning">🔒 Password protected</span>
                                         )}
                                         {link.expire_at && link.expire_at < Date.now() / 1000 && (
-                                            <span className="badge badge-sm badge-error">已过期</span>
+                                            <span className="badge badge-sm badge-error">Expired</span>
                                         )}
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <label className="cursor-pointer" title={link.is_disabled === 0 ? '点击禁用' : '点击启用'}>
+                                        <label className="cursor-pointer" title={link.is_disabled === 0 ? "Click to disable" : "Click to enable"}>
                                             <input
                                                 type="checkbox"
                                                 className="toggle toggle-success toggle-sm"
@@ -629,74 +629,74 @@ export function ShortLinksPage() {
                                             onClick={() => handleEdit(link)}
                                             disabled={loading}
                                         >
-                                            编辑
+                                            Edit
                                         </button>
                                         <button
                                             className="btn btn-sm btn-ghost text-error hover:bg-error hover:text-white"
                                             onClick={() => setDeletingLink(link)}
                                             disabled={loading}
                                         >
-                                            删除
+                                            Delete
                                         </button>
                                     </div>
                                 </div>
 
-                                {/* 第二行：目标 URL */}
+                                {/* Row 2: Target URL */}
                                 <div className="text-sm text-gray-600 mb-3 truncate" title={link.target_url}>
                                     <span className="text-gray-400 mr-1">→</span>
                                     {link.target_url}
                                 </div>
 
-                                {/* 第三行：核心属性网格 */}
+                                {/* Row 3: Core attributes */}
                                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-x-8 gap-y-2 text-sm mb-3">
                                     <div>
-                                        <span className="text-gray-400">跳转码：</span>
+                                        <span className="text-gray-400">Redirect code:</span>
                                         <span className="font-medium">{link.redirect_http_code}</span>
                                     </div>
                                     <div>
-                                        <span className="text-gray-400">点击量：</span>
+                                        <span className="text-gray-400">Clicks:</span>
                                         <span className="font-semibold text-primary">{link.total_clicks}</span>
                                     </div>
                                     <div>
-                                        <span className="text-gray-400">中间页：</span>
-                                        <span>{link.use_interstitial === 1 ? `✅ ${link.interstitial_delay}s` : '关闭'}</span>
+                                        <span className="text-gray-400">Interstitial:</span>
+                                        <span>{link.use_interstitial === 1 ? `✅ ${link.interstitial_delay}s` : "Off"}</span>
                                     </div>
                                     <div>
-                                        <span className="text-gray-400">强制中间页：</span>
-                                        <span>{link.force_interstitial === 1 ? '是' : '否'}</span>
+                                        <span className="text-gray-400">Force interstitial:</span>
+                                        <span>{link.force_interstitial === 1 ? "Yes" : "No"}</span>
                                     </div>
                                     <div>
-                                        <span className="text-gray-400">最大访问：</span>
-                                        <span>{link.max_visits ?? '无限制'}</span>
+                                        <span className="text-gray-400">Max visits:</span>
+                                        <span>{link.max_visits ?? "Unlimited"}</span>
                                     </div>
                                     <div>
-                                        <span className="text-gray-400">过期时间：</span>
-                                        <span>{link.expire_at ? formatTime(link.expire_at) : '永不过期'}</span>
+                                        <span className="text-gray-400">Expiration:</span>
+                                        <span>{link.expire_at ? formatTime(link.expire_at) : "Never"}</span>
                                     </div>
                                 </div>
 
-                                {/* 第四行：模板信息 */}
+                                {/* Row 4: Templates */}
                                 <div className="grid grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-2 text-sm mb-3">
                                     <div>
-                                        <span className="text-gray-400">跳转模板：</span>
+                                        <span className="text-gray-400">Redirect template:</span>
                                         <span>{getTemplateName(link.template_id)}</span>
                                     </div>
                                     <div>
-                                        <span className="text-gray-400">错误模板：</span>
+                                        <span className="text-gray-400">Error template:</span>
                                         <span>{getTemplateName(link.error_template_id)}</span>
                                     </div>
                                     <div>
-                                        <span className="text-gray-400">密码模板：</span>
+                                        <span className="text-gray-400">Password template:</span>
                                         <span>{getTemplateName(link.password_template_id)}</span>
                                     </div>
                                 </div>
 
-                                {/* 第五行：标签 + 备注 + 时间 */}
+                                {/* Row 5: Tags + notes + time */}
                                 <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-gray-400 mt-1">
-                                    {/* 标签 */}
+                                    {/* Tags */}
                                     {link.tags.length > 0 && (
                                         <div className="flex items-center gap-1">
-                                            <span>标签：</span>
+                                            <span>Tags:</span>
                                             {link.tags.map((tag) => (
                                                 <span
                                                     key={tag.id}
@@ -712,12 +712,12 @@ export function ShortLinksPage() {
                                         </div>
                                     )}
                                     {link.remark && (
-                                        <span title={link.remark}>备注：{link.remark}</span>
+                                        <span title={link.remark}>Notes: {link.remark}</span>
                                     )}
-                                    <span>创建：{formatTime(link.created_at)}</span>
-                                    {link.updated_at && <span>更新：{formatTime(link.updated_at)}</span>}
+                                    <span>Created: {formatTime(link.created_at)}</span>
+                                    {link.updated_at && <span>Updated: {formatTime(link.updated_at)}</span>}
                                     {link.last_access_at && (
-                                        <span>最后访问：{formatTime(link.last_access_at)}</span>
+                                        <span>Last access: {formatTime(link.last_access_at)}</span>
                                     )}
                                 </div>
                             </div>
@@ -726,11 +726,11 @@ export function ShortLinksPage() {
                 )}
             </div>
 
-            {/* 分页 */}
+            {/* Pagination */}
             {totalPages > 0 && (
                 <div className="flex flex-col sm:flex-row justify-between items-center mt-6 gap-3">
                     <div className="text-sm text-gray-500">
-                        共 {total} 条记录，第 {page}/{totalPages} 页，每页 {pageSize} 条
+                        {total} records, page {page}/{totalPages}, {pageSize} per page
                     </div>
                     {totalPages > 1 && (
                         <div className="join">
@@ -797,17 +797,17 @@ export function ShortLinksPage() {
                 </div>
             )}
 
-            {/* 删除确认弹窗 */}
+            {/* Delete confirmation modal */}
             {deletingLink && (
                 <div className="modal modal-open">
                     <div className="modal-box">
-                        <h3 className="font-bold text-lg mb-4">确认删除</h3>
+                        <h3 className="font-bold text-lg mb-4">Confirm delete</h3>
                         <p className="py-4">
-                            确定要删除短链接{" "}
+                            Are you sure you want to delete the short link{" "}
                             <span className="font-mono font-bold">
                                 {deletingLink.domain_host}/{deletingLink.code}
                             </span>{" "}
-                            吗？此操作不可撤销。
+                            ? This action cannot be undone.
                         </p>
                         <div className="modal-action">
                             <button
@@ -815,7 +815,7 @@ export function ShortLinksPage() {
                                 onClick={() => setDeletingLink(null)}
                                 disabled={loading}
                             >
-                                取消
+                                Cancel
                             </button>
                             <button
                                 className="btn btn-error"
@@ -825,10 +825,10 @@ export function ShortLinksPage() {
                                 {loading ? (
                                     <>
                                         <span className="loading loading-spinner loading-sm"></span>
-                                        删除中...
+                                        Deleting...
                                     </>
                                 ) : (
-                                    "确认删除"
+                                    "Confirm delete"
                                 )}
                             </button>
                         </div>
@@ -840,20 +840,20 @@ export function ShortLinksPage() {
                 </div>
             )}
 
-            {/* 创建/编辑弹窗 */}
+            {/* Create/Edit modal */}
             {showModal && (
                 <div className="modal modal-open">
                     <div className="modal-box max-w-2xl max-h-[90vh]">
                         <h3 className="font-bold text-lg mb-6">
-                            {modalMode === "create" ? "新建短链接" : "编辑短链接"}
+                            {modalMode === "create" ? "Create Short Link" : "Edit Short Link"}
                         </h3>
 
                         <form onSubmit={handleSubmit} className="space-y-5 overflow-y-auto pr-2 pl-2">
-                            {/* 目标 URL */}
+                            {/* Target URL */}
                             <div className="form-control">
                                 <label className="label">
                                     <span className="label-text font-medium">
-                                        目标 URL <span className="text-error">*</span>
+                                        Target URL <span className="text-error">*</span>
                                     </span>
                                 </label>
                                 <input
@@ -869,12 +869,12 @@ export function ShortLinksPage() {
                                 />
                             </div>
 
-                            {/* 域名 & 短码 */}
+                            {/* Domain & short code */}
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="form-control">
                                     <label className="label">
                                         <span className="label-text font-medium">
-                                            域名 <span className="text-error">*</span>
+                                            Domain <span className="text-error">*</span>
                                         </span>
                                     </label>
                                     <select
@@ -889,12 +889,12 @@ export function ShortLinksPage() {
                                         required
                                     >
                                         <option value={0} disabled>
-                                            选择域名
+                                            Select a domain
                                         </option>
                                         {domains.map((d) => (
                                             <option key={d.id} value={d.id}>
                                                 {d.host}
-                                                {d.is_default === 1 ? " (默认)" : ""}
+                                                {d.is_default === 1 ? " (Default)" : ""}
                                             </option>
                                         ))}
                                     </select>
@@ -902,12 +902,12 @@ export function ShortLinksPage() {
 
                                 <div className="form-control">
                                     <label className="label">
-                                        <span className="label-text font-medium">自定义短码</span>
+                                        <span className="label-text font-medium">Custom short code</span>
                                     </label>
                                     <input
                                         type="text"
                                         className="input input-bordered w-full focus:input-primary"
-                                        placeholder="留空则自动生成"
+                                        placeholder="Leave blank to auto-generate"
                                         value={formData.code || ""}
                                         onChange={(e) =>
                                             setFormData({ ...formData, code: e.target.value })
@@ -915,16 +915,16 @@ export function ShortLinksPage() {
                                     />
                                     <label className="label">
                                         <span className="label-text-alt text-gray-500">
-                                            仅支持字母、数字、连字符、下划线
+                                            Only letters, numbers, hyphens, and underscores are allowed
                                         </span>
                                     </label>
                                 </div>
                             </div>
 
-                            {/* 跳转状态码 */}
+                            {/* Redirect status code */}
                             <div className="form-control">
                                 <label className="label">
-                                    <span className="label-text font-medium">跳转状态码</span>
+                                    <span className="label-text font-medium">Redirect status code</span>
                                 </label>
                                 <select
                                     className="select select-bordered w-full focus:select-primary"
@@ -936,17 +936,17 @@ export function ShortLinksPage() {
                                         })
                                     }
                                 >
-                                    <option value={302}>302 - 临时重定向（推荐）</option>
-                                    <option value={301}>301 - 永久重定向</option>
-                                    <option value={307}>307 - 临时重定向（保持方法）</option>
-                                    <option value={308}>308 - 永久重定向（保持方法）</option>
+                                    <option value={302}>302 - Temporary redirect (recommended)</option>
+                                    <option value={301}>301 - Permanent redirect</option>
+                                    <option value={307}>307 - Temporary redirect (method preserved)</option>
+                                    <option value={308}>308 - Permanent redirect (method preserved)</option>
                                 </select>
                             </div>
 
-                            {/* 标签 */}
+                            {/* Tags */}
                             <div className="form-control">
                                 <label className="label">
-                                    <span className="label-text font-medium">标签</span>
+                                    <span className="label-text font-medium">Tags</span>
                                 </label>
                                 <TagInput
                                     tags={formData.tags || []}
@@ -954,14 +954,14 @@ export function ShortLinksPage() {
                                 />
                             </div>
 
-                            {/* 备注 */}
+                            {/* Notes */}
                             <div className="form-control">
                                 <label className="label">
-                                    <span className="label-text font-medium">备注</span>
+                                    <span className="label-text font-medium">Notes</span>
                                 </label>
                                 <textarea
                                     className="textarea textarea-bordered w-full focus:textarea-primary resize-none"
-                                    placeholder="可选备注信息"
+                                    placeholder="Optional notes"
                                     value={formData.remark || ""}
                                     onChange={(e) =>
                                         setFormData({
@@ -973,30 +973,30 @@ export function ShortLinksPage() {
                                 />
                             </div>
 
-                            {/* 高级选项折叠 */}
+                            {/* Advanced options toggle */}
                             <div className="divider my-2">
                                 <button
                                     type="button"
                                     className="btn btn-ghost btn-sm"
                                     onClick={() => setShowAdvanced(!showAdvanced)}
                                 >
-                                    {showAdvanced ? "▲ 收起高级选项" : "▼ 展开高级选项"}
+                                    {showAdvanced ? "▲ Collapse advanced options" : "▼ Expand advanced options"}
                                 </button>
                             </div>
 
                             {showAdvanced && (
                                 <div className="space-y-5">
-                                    {/* 模板选择 */}
-                                    <h4 className="font-medium text-base-content">模板设置</h4>
+                                    {/* Template selection */}
+                                    <h4 className="font-medium text-base-content">Template settings</h4>
                                     <p className="text-sm text-gray-500">
-                                        为该链接配置专用模板，留空则使用域名或系统默认模板
+                                        Configure templates for this link; leave blank to use domain/system defaults
                                     </p>
 
                                     <div className="grid grid-cols-1 gap-4">
                                         <div className="form-control">
                                             <label className="label">
                                                 <span className="label-text font-medium">
-                                                    跳转中间页模板
+                                                    Interstitial page template
                                                 </span>
                                             </label>
                                             <select
@@ -1011,7 +1011,7 @@ export function ShortLinksPage() {
                                                     })
                                                 }
                                             >
-                                                <option value="">使用默认</option>
+                                                <option value="">Use default</option>
                                                 {templateOptions
                                                     .filter(
                                                         (t) =>
@@ -1029,7 +1029,7 @@ export function ShortLinksPage() {
                                         <div className="form-control">
                                             <label className="label">
                                                 <span className="label-text font-medium">
-                                                    错误页模板
+                                                    Error page template
                                                 </span>
                                             </label>
                                             <select
@@ -1044,7 +1044,7 @@ export function ShortLinksPage() {
                                                     })
                                                 }
                                             >
-                                                <option value="">使用默认</option>
+                                                <option value="">Use default</option>
                                                 {templateOptions
                                                     .filter(
                                                         (t) =>
@@ -1055,7 +1055,7 @@ export function ShortLinksPage() {
                                                     .map((t) => (
                                                         <option key={t.id} value={t.id}>
                                                             {t.name}
-                                                            {t.type === 2 ? " (错误页)" : ""}
+                                                            {t.type === 2 ? " (Error page)" : ""}
                                                         </option>
                                                     ))}
                                             </select>
@@ -1064,7 +1064,7 @@ export function ShortLinksPage() {
                                         <div className="form-control">
                                             <label className="label">
                                                 <span className="label-text font-medium">
-                                                    密码验证页模板
+                                                    Password page template
                                                 </span>
                                             </label>
                                             <select
@@ -1079,7 +1079,7 @@ export function ShortLinksPage() {
                                                     })
                                                 }
                                             >
-                                                <option value="">使用默认</option>
+                                                <option value="">Use default</option>
                                                 {templateOptions
                                                     .filter(
                                                         (t) =>
@@ -1090,7 +1090,7 @@ export function ShortLinksPage() {
                                                     .map((t) => (
                                                         <option key={t.id} value={t.id}>
                                                             {t.name}
-                                                            {t.type === 1 ? " (密码页)" : ""}
+                                                            {t.type === 1 ? " (Password page)" : ""}
                                                         </option>
                                                     ))}
                                             </select>
@@ -1099,8 +1099,8 @@ export function ShortLinksPage() {
 
                                     <div className="divider my-2"></div>
 
-                                    {/* 中间页设置 */}
-                                    <h4 className="font-medium text-base-content">中间页设置</h4>
+                                    {/* Interstitial settings */}
+                                    <h4 className="font-medium text-base-content">Interstitial settings</h4>
 
                                     <div className="form-control">
                                         <label className="label cursor-pointer justify-start gap-3">
@@ -1115,7 +1115,7 @@ export function ShortLinksPage() {
                                                     })
                                                 }
                                             />
-                                            <span className="label-text">启用跳转中间页</span>
+                                            <span className="label-text">Enable interstitial page</span>
                                         </label>
                                     </div>
 
@@ -1124,7 +1124,7 @@ export function ShortLinksPage() {
                                             <div className="form-control">
                                                 <label className="label">
                                                     <span className="label-text font-medium">
-                                                        中间页延迟（秒）
+                                                        Interstitial delay (seconds)
                                                     </span>
                                                 </label>
                                                 <input
@@ -1157,7 +1157,7 @@ export function ShortLinksPage() {
                                                         }
                                                     />
                                                     <span className="label-text">
-                                                        强制中间页（无法跳过）
+                                                        Force interstitial (cannot be skipped)
                                                     </span>
                                                 </label>
                                             </div>
@@ -1166,20 +1166,20 @@ export function ShortLinksPage() {
 
                                     <div className="divider my-2"></div>
 
-                                    {/* 访问限制 */}
-                                    <h4 className="font-medium text-base-content">访问限制</h4>
+                                    {/* Access restrictions */}
+                                    <h4 className="font-medium text-base-content">Access restrictions</h4>
 
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="form-control">
                                             <label className="label">
                                                 <span className="label-text font-medium">
-                                                    访问密码
+                                                    Access password
                                                 </span>
                                             </label>
                                             <input
                                                 type="text"
                                                 className="input input-bordered w-full"
-                                                placeholder="留空则不需要密码"
+                                                placeholder="Leave blank for no password"
                                                 value={formData.password || ""}
                                                 onChange={(e) =>
                                                     setFormData({
@@ -1193,14 +1193,14 @@ export function ShortLinksPage() {
                                         <div className="form-control">
                                             <label className="label">
                                                 <span className="label-text font-medium">
-                                                    最大访问次数
+                                                    Max visits
                                                 </span>
                                             </label>
                                             <input
                                                 type="number"
                                                 min={0}
                                                 className="input input-bordered w-full"
-                                                placeholder="留空则不限制"
+                                                placeholder="Leave blank for unlimited"
                                                 value={formData.max_visits ?? ""}
                                                 onChange={(e) =>
                                                     setFormData({
@@ -1216,7 +1216,7 @@ export function ShortLinksPage() {
 
                                     <div className="form-control">
                                         <label className="label">
-                                            <span className="label-text font-medium">过期时间</span>
+                                            <span className="label-text font-medium">Expiration time</span>
                                         </label>
                                         <input
                                             type="datetime-local"
@@ -1231,7 +1231,7 @@ export function ShortLinksPage() {
                                         />
                                         <label className="label">
                                             <span className="label-text-alt text-gray-500">
-                                                留空则永不过期
+                                                Leave blank for no expiration
                                             </span>
                                         </label>
                                     </div>
@@ -1246,18 +1246,18 @@ export function ShortLinksPage() {
                                     onClick={() => setShowModal(false)}
                                     disabled={loading}
                                 >
-                                    取消
+                                    Cancel
                                 </button>
                                 <button type="submit" className="btn btn-primary" disabled={loading}>
                                     {loading ? (
                                         <>
                                             <span className="loading loading-spinner loading-sm"></span>
-                                            提交中...
+                                            Submitting...
                                         </>
                                     ) : modalMode === "create" ? (
-                                        "创建"
+                                        "Create"
                                     ) : (
-                                        "保存"
+                                        "Save"
                                     )}
                                 </button>
                             </div>

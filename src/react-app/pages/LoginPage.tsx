@@ -19,7 +19,7 @@ export function LoginPage() {
                 }
             })
             .catch(() => {
-                // 检查失败时不阻止登录
+                // Do not block login when the check fails
             })
             .finally(() => setChecking(false));
     }, [navigate]);
@@ -34,14 +34,14 @@ export function LoginPage() {
 
             const token = body?.data?.token;
             if (!token) {
-                setError("登录失败：未收到 token");
+                setError("Login failed: token not received");
                 return;
             }
 
             localStorage.setItem("auth_token", token);
             navigate("/", { replace: true });
         } catch (e) {
-            let msg = "登录失败";
+            let msg = "Login failed";
             if (axios.isAxiosError(e)) {
                 msg = e.response?.data?.message || msg;
             }
@@ -66,20 +66,20 @@ export function LoginPage() {
                     <div className="text-center space-y-1">
                         <span className="text-4xl">🔐</span>
                         <h1 className="text-3xl font-extrabold tracking-tight">
-                            欢迎回来
+                            Welcome back
                         </h1>
                         <p className="text-sm text-base-content/60">
-                            请登录你的账号以继续
+                            Please sign in to continue
                         </p>
                     </div>
 
                     <div className="divider my-0" />
 
                     <label className="form-control w-full">
-                        <span className="label-text font-medium mb-1">账号</span>
+                        <span className="label-text font-medium mb-1">Account</span>
                         <input
                             className="input input-bordered input-lg w-full focus:input-primary transition-all"
-                            placeholder="请输入账号"
+                            placeholder="Enter your account"
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
                             onKeyDown={(e) => e.key === "Enter" && handleLogin()}
@@ -87,11 +87,11 @@ export function LoginPage() {
                     </label>
 
                     <label className="form-control w-full">
-                        <span className="label-text font-medium mb-1">密码</span>
+                        <span className="label-text font-medium mb-1">Password</span>
                         <input
                             type="password"
                             className="input input-bordered input-lg w-full focus:input-primary transition-all"
-                            placeholder="请输入密码"
+                            placeholder="Enter your password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             onKeyDown={(e) => e.key === "Enter" && handleLogin()}
@@ -115,10 +115,10 @@ export function LoginPage() {
                         {loading ? (
                             <>
                                 <span className="loading loading-spinner loading-sm" />
-                                登录中...
+                                Signing in...
                             </>
                         ) : (
-                            "登录"
+                            "Sign in"
                         )}
                     </button>
                 </div>

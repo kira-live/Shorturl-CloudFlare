@@ -19,15 +19,15 @@ interface Message {
 
 // 模板类型映射
 const TEMPLATE_TYPE_OPTIONS = [
-    { value: 0, label: "普通模板（中转页）" },
-    { value: 1, label: "密码页" },
-    { value: 2, label: "错误页" },
-    { value: 3, label: "未找到页" },
+    { value: 0, label: "Standard template (redirect page)" },
+    { value: 1, label: "Password page" },
+    { value: 2, label: "Error page" },
+    { value: 3, label: "Not found page" },
 ];
 
 function getTypeLabel(type: number | null): string {
     const found = TEMPLATE_TYPE_OPTIONS.find((o) => o.value === type);
-    return found?.label ?? "未设置";
+    return found?.label ?? "Not set";
 }
 
 function getTypeBadgeClass(type: number | null): string {
@@ -87,7 +87,7 @@ function FileSelector({ prefix, value, onChange }: FileSelectorProps) {
             })
             .catch(() => {
                 if (!cancelled) {
-                    setLoaded({ prefix, files: [], error: "加载文件列表失败" });
+                    setLoaded({ prefix, files: [], error: "Failed to load file list" });
                 }
             });
 
@@ -96,7 +96,7 @@ function FileSelector({ prefix, value, onChange }: FileSelectorProps) {
 
     // 从 loaded 状态和当前 prefix 推导出渲染所需的值，无需同步 setState
     if (!prefix) {
-        return <p className="text-sm text-gray-400">请先选择资源前缀</p>;
+        return <p className="text-sm text-gray-400">Please select an asset prefix first</p>;
     }
 
     // prefix 有值但尚未加载完成（loaded 为 null 或 loaded 对应的是旧 prefix）
@@ -104,7 +104,7 @@ function FileSelector({ prefix, value, onChange }: FileSelectorProps) {
         return (
             <div className="flex items-center gap-2 text-sm text-gray-500">
                 <span className="loading loading-spinner loading-xs" />
-                加载文件列表...
+                Loading file list...
             </div>
         );
     }
@@ -114,7 +114,7 @@ function FileSelector({ prefix, value, onChange }: FileSelectorProps) {
     }
 
     if (loaded.files.length === 0) {
-        return <p className="text-sm text-gray-400">该前缀下暂无文件</p>;
+        return <p className="text-sm text-gray-400">No files under this prefix</p>;
     }
 
     return (
@@ -123,7 +123,7 @@ function FileSelector({ prefix, value, onChange }: FileSelectorProps) {
             value={value}
             onChange={(e) => onChange(e.target.value)}
         >
-            <option value="">-- 请选择主文件 --</option>
+            <option value="">-- Please select the main file --</option>
             {loaded.files.map((f) => (
                 <option key={f} value={f}>
                     {f}
@@ -176,7 +176,7 @@ function TemplateModal({ mode, initialData, prefixes, loading, onSubmit, onClose
         <div className="modal modal-open">
             <div className="modal-box max-w-2xl max-h-[90vh]">
                 <h3 className="font-bold text-lg mb-6">
-                    {mode === "create" ? "新增模板" : "编辑模板"}
+                    {mode === "create" ? "Create Template" : "Edit Template"}
                 </h3>
 
                 <form onSubmit={handleSubmit} className="space-y-5">
@@ -184,13 +184,13 @@ function TemplateModal({ mode, initialData, prefixes, loading, onSubmit, onClose
                     <div className="form-control">
                         <label className="label">
                             <span className="label-text font-medium">
-                                模板名称 <span className="text-error">*</span>
+                                Template Name <span className="text-error">*</span>
                             </span>
                         </label>
                         <input
                             type="text"
                             className="input input-bordered w-full"
-                            placeholder="例如: 默认中转页模板"
+                            placeholder="e.g., Default redirect page template"
                             value={form.name}
                             onChange={(e) => setForm({ ...form, name: e.target.value })}
                             required
@@ -201,7 +201,7 @@ function TemplateModal({ mode, initialData, prefixes, loading, onSubmit, onClose
                     {/* 模板类型 */}
                     <div className="form-control">
                         <label className="label">
-                            <span className="label-text font-medium">模板类型</span>
+                            <span className="label-text font-medium">Template Type</span>
                         </label>
                         <select
                             className="select select-bordered w-full"
@@ -219,7 +219,7 @@ function TemplateModal({ mode, initialData, prefixes, loading, onSubmit, onClose
                     {/* 内容来源 */}
                     <div className="form-control">
                         <label className="label">
-                            <span className="label-text font-medium">内容来源</span>
+                            <span className="label-text font-medium">Content Source</span>
                         </label>
                         <div className="flex gap-4">
                             <label className="label cursor-pointer gap-2">
@@ -232,7 +232,7 @@ function TemplateModal({ mode, initialData, prefixes, loading, onSubmit, onClose
                                         setForm({ ...form, content_type: 0, asset_prefix: "", main_file: "" })
                                     }
                                 />
-                                <span className="label-text">直接编写 HTML</span>
+                                <span className="label-text">Write HTML directly</span>
                             </label>
                             <label className="label cursor-pointer gap-2">
                                 <input
@@ -244,7 +244,7 @@ function TemplateModal({ mode, initialData, prefixes, loading, onSubmit, onClose
                                         setForm({ ...form, content_type: 1, html_content: "" })
                                     }
                                 />
-                                <span className="label-text">使用模板资源文件</span>
+                                <span className="label-text">Use template assets</span>
                             </label>
                         </div>
                     </div>
@@ -254,7 +254,7 @@ function TemplateModal({ mode, initialData, prefixes, loading, onSubmit, onClose
                         <div className="form-control">
                             <label className="label">
                                 <span className="label-text font-medium">
-                                    HTML 内容 <span className="text-error">*</span>
+                                    HTML Content <span className="text-error">*</span>
                                 </span>
                             </label>
                             <textarea
@@ -266,7 +266,7 @@ function TemplateModal({ mode, initialData, prefixes, loading, onSubmit, onClose
                             />
                             <label className="label">
                                 <span className="label-text-alt text-gray-500">
-                                    支持使用 {"{{变量名}}"} 进行模板替换
+                                    Supports template replacement using {"{{variable}}"} syntax
                                 </span>
                             </label>
                         </div>
@@ -279,7 +279,7 @@ function TemplateModal({ mode, initialData, prefixes, loading, onSubmit, onClose
                             <div className="form-control">
                                 <label className="label">
                                     <span className="label-text font-medium">
-                                        资源前缀 (Prefix) <span className="text-error">*</span>
+                                        Asset Prefix (Prefix) <span className="text-error">*</span>
                                     </span>
                                 </label>
                                 <select
@@ -289,16 +289,16 @@ function TemplateModal({ mode, initialData, prefixes, loading, onSubmit, onClose
                                         setForm({ ...form, asset_prefix: e.target.value, main_file: "" })
                                     }
                                 >
-                                    <option value="">-- 请选择资源前缀 --</option>
+                                    <option value="">-- Please select an asset prefix --</option>
                                     {prefixes.map((p) => (
                                         <option key={p.asset_prefix} value={p.asset_prefix}>
-                                            {p.asset_prefix} ({p.file_count} 个文件)
+                                            {p.asset_prefix} ({p.file_count} files)
                                         </option>
                                     ))}
                                 </select>
                                 <label className="label">
                                     <span className="label-text-alt text-gray-500">
-                                        选择模板资源管理中已上传的资源组
+                                        Select a resource group uploaded in Template Assets
                                     </span>
                                 </label>
                             </div>
@@ -307,7 +307,7 @@ function TemplateModal({ mode, initialData, prefixes, loading, onSubmit, onClose
                             <div className="form-control">
                                 <label className="label">
                                     <span className="label-text font-medium">
-                                        主文件 (Main File) <span className="text-error">*</span>
+                                        Main File <span className="text-error">*</span>
                                     </span>
                                 </label>
                                 <FileSelector
@@ -317,7 +317,7 @@ function TemplateModal({ mode, initialData, prefixes, loading, onSubmit, onClose
                                 />
                                 <label className="label">
                                     <span className="label-text-alt text-gray-500">
-                                        选择作为模板入口的 HTML 文件
+                                        Select the HTML file used as the template entry
                                     </span>
                                 </label>
                             </div>
@@ -338,9 +338,9 @@ function TemplateModal({ mode, initialData, prefixes, loading, onSubmit, onClose
                                 }
                             />
                             <div className="flex flex-col">
-                                <span className="label-text font-medium">启用该模板</span>
+                                <span className="label-text font-medium">Enable this template</span>
                                 <span className="label-text-alt text-gray-500">
-                                    禁用后该模板将不会在域名/短链接中生效
+                                    When disabled, this template will not take effect on domains/short links
                                 </span>
                             </div>
                         </label>
@@ -354,18 +354,18 @@ function TemplateModal({ mode, initialData, prefixes, loading, onSubmit, onClose
                             onClick={onClose}
                             disabled={loading}
                         >
-                            取消
+                            Cancel
                         </button>
                         <button type="submit" className="btn btn-primary" disabled={loading}>
                             {loading ? (
                                 <>
                                     <span className="loading loading-spinner loading-sm" />
-                                    提交中...
+                                    Submitting...
                                 </>
                             ) : mode === "create" ? (
-                                "创建"
+                                "Create"
                             ) : (
-                                "保存"
+                                "Save"
                             )}
                         </button>
                     </div>
@@ -421,7 +421,7 @@ export function TemplatesPage() {
                 showMessage("error", res.data.message);
             }
         } catch {
-            showMessage("error", "加载模板列表失败");
+            showMessage("error", "Failed to load template list");
         } finally {
             setLoading(false);
         }
@@ -467,7 +467,7 @@ export function TemplatesPage() {
                 showMessage("error", detailRes.data.message);
             }
         } catch {
-            showMessage("error", "加载模板详情失败");
+            showMessage("error", "Failed to load template details");
         } finally {
             setLoading(false);
         }
@@ -477,19 +477,19 @@ export function TemplatesPage() {
     const handleSubmit = async (form: TemplateFormData) => {
         // 验证
         if (!form.name.trim()) {
-            showMessage("error", "请输入模板名称");
+            showMessage("error", "Please enter a template name");
             return;
         }
         if (form.content_type === 0 && !form.html_content.trim()) {
-            showMessage("error", "请输入 HTML 内容");
+            showMessage("error", "Please enter HTML content");
             return;
         }
         if (form.content_type === 1 && !form.asset_prefix) {
-            showMessage("error", "请选择资源前缀");
+            showMessage("error", "Please select an asset prefix");
             return;
         }
         if (form.content_type === 1 && !form.main_file) {
-            showMessage("error", "请选择主文件");
+            showMessage("error", "Please select the main file");
             return;
         }
 
@@ -511,7 +511,7 @@ export function TemplatesPage() {
                 }
                 const res = await templateApi.create(payload);
                 if (res.data.code === 0) {
-                    showMessage("success", "模板创建成功");
+                    showMessage("success", "Template created successfully");
                     setShowModal(false);
                     loadTemplates();
                 } else {
@@ -535,7 +535,7 @@ export function TemplatesPage() {
                 }
                 const res = await templateApi.update(editingTemplate.id, payload);
                 if (res.data.code === 0) {
-                    showMessage("success", "模板更新成功");
+                    showMessage("success", "Template updated successfully");
                     setShowModal(false);
                     loadTemplates();
                 } else {
@@ -545,8 +545,8 @@ export function TemplatesPage() {
         } catch (error: unknown) {
             const msg =
                 error && typeof error === "object" && "response" in error
-                    ? (error.response as { data?: { message?: string } })?.data?.message || "操作失败"
-                    : "操作失败";
+                    ? (error.response as { data?: { message?: string } })?.data?.message || "Operation failed"
+                    : "Operation failed";
             showMessage("error", msg);
         } finally {
             setSubmitLoading(false);
@@ -564,7 +564,7 @@ export function TemplatesPage() {
                 showMessage("error", res.data.message);
             }
         } catch {
-            showMessage("error", "切换状态失败");
+            showMessage("error", "Failed to toggle status");
         }
     };
 
@@ -575,7 +575,7 @@ export function TemplatesPage() {
             setLoading(true);
             const res = await templateApi.delete(deletingTemplate.id);
             if (res.data.code === 0) {
-                showMessage("success", "模板删除成功");
+                showMessage("success", "Template deleted successfully");
                 setDeletingTemplate(null);
                 loadTemplates();
             } else {
@@ -584,8 +584,8 @@ export function TemplatesPage() {
         } catch (error: unknown) {
             const msg =
                 error && typeof error === "object" && "response" in error
-                    ? (error.response as { data?: { message?: string } })?.data?.message || "删除失败"
-                    : "删除失败";
+                    ? (error.response as { data?: { message?: string } })?.data?.message || "Delete failed"
+                    : "Delete failed";
             showMessage("error", msg);
         } finally {
             setLoading(false);
@@ -594,7 +594,7 @@ export function TemplatesPage() {
 
     // 格式化时间
     const formatTime = (timestamp: number) => {
-        return new Date(timestamp * 1000).toLocaleString("zh-CN");
+        return new Date(timestamp * 1000).toLocaleString("en-US");
     };
 
     // 编辑弹窗的初始数据
@@ -664,11 +664,11 @@ export function TemplatesPage() {
             {/* 标题栏 */}
             <div className="flex justify-between items-center mb-6">
                 <div>
-                    <h1 className="text-2xl font-bold">模板管理</h1>
-                    <p className="text-sm text-gray-500 mt-1">共 {total} 个模板</p>
+                    <h1 className="text-2xl font-bold">Template Management</h1>
+                    <p className="text-sm text-gray-500 mt-1">Total {total} templates</p>
                 </div>
                 <button className="btn btn-primary" onClick={handleCreate} disabled={loading}>
-                    + 新增模板
+                    + New Template
                 </button>
             </div>
 
@@ -678,12 +678,12 @@ export function TemplatesPage() {
                     <thead>
                     <tr>
                         <th>ID</th>
-                        <th>名称</th>
-                        <th>类型</th>
-                        <th>内容来源</th>
-                        <th>状态</th>
-                        <th>创建时间</th>
-                        <th>操作</th>
+                        <th>Name</th>
+                        <th>Type</th>
+                        <th>Content Source</th>
+                        <th>Status</th>
+                        <th>Created At</th>
+                        <th>Actions</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -696,7 +696,7 @@ export function TemplatesPage() {
                     ) : templates.length === 0 ? (
                         <tr>
                             <td colSpan={7} className="text-center py-8 text-gray-500">
-                                暂无模板
+                                No templates
                             </td>
                         </tr>
                     ) : (
@@ -714,7 +714,7 @@ export function TemplatesPage() {
                                         <span className="badge badge-sm badge-outline">HTML</span>
                                     ) : (
                                         <div className="flex flex-col">
-                                            <span className="badge badge-sm badge-outline badge-secondary">文件</span>
+                                            <span className="badge badge-sm badge-outline badge-secondary">File</span>
                                             <span className="text-xs text-gray-400 mt-0.5">
                                                     {tpl.asset_prefix}/{tpl.main_file}
                                                 </span>
@@ -739,14 +739,14 @@ export function TemplatesPage() {
                                             onClick={() => handleEdit(tpl)}
                                             disabled={loading}
                                         >
-                                            编辑
+                                            Edit
                                         </button>
                                         <button
                                             className="btn btn-sm btn-ghost text-error hover:bg-error hover:text-white"
                                             onClick={() => setDeletingTemplate(tpl)}
                                             disabled={loading}
                                         >
-                                            删除
+                                            Delete
                                         </button>
                                     </div>
                                 </td>
@@ -769,7 +769,7 @@ export function TemplatesPage() {
                             «
                         </button>
                         <button className="join-item btn">
-                            第 {page} / {totalPages} 页
+                            Page {page} / {totalPages}
                         </button>
                         <button
                             className="join-item btn"
@@ -786,13 +786,13 @@ export function TemplatesPage() {
             {deletingTemplate && (
                 <div className="modal modal-open">
                     <div className="modal-box">
-                        <h3 className="font-bold text-lg mb-4">确认删除</h3>
+                        <h3 className="font-bold text-lg mb-4">Confirm Deletion</h3>
                         <p className="py-4">
-                            确定要删除模板{" "}
-                            <span className="font-bold">"{deletingTemplate.name}"</span> 吗？
+                            Are you sure you want to delete template{" "}
+                            <span className="font-bold">"{deletingTemplate.name}"</span>?
                         </p>
                         <p className="text-sm text-gray-500">
-                            如果有域名或短链接正在引用此模板，删除将会失败。
+                            If any domains or short links reference this template, deletion will fail.
                         </p>
                         <div className="modal-action">
                             <button
@@ -800,16 +800,16 @@ export function TemplatesPage() {
                                 onClick={() => setDeletingTemplate(null)}
                                 disabled={loading}
                             >
-                                取消
+                                Cancel
                             </button>
                             <button className="btn btn-error" onClick={handleDelete} disabled={loading}>
                                 {loading ? (
                                     <>
                                         <span className="loading loading-spinner loading-sm" />
-                                        删除中...
+                                        Deleting...
                                     </>
                                 ) : (
-                                    "确认删除"
+                                    "Confirm Delete"
                                 )}
                             </button>
                         </div>

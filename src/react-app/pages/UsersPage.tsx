@@ -16,18 +16,18 @@ export function UsersPage() {
     const [total, setTotal] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
 
-    // 消息提示状态
+    // Message state
     const [message, setMessage] = useState<Message | null>(null);
 
-    // 弹窗状态
+    // Modal state
     const [showModal, setShowModal] = useState(false);
     const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
     const [editingUser, setEditingUser] = useState<User | null>(null);
 
-    // 删除确认弹窗
+    // Delete confirmation modal
     const [deletingUser, setDeletingUser] = useState<User | null>(null);
 
-    // 表单数据
+    // Form data
     const [formData, setFormData] = useState<CreateUserRequest>({
         email: '',
         username: '',
@@ -36,13 +36,13 @@ export function UsersPage() {
         status: 0,
     });
 
-    // 显示消息
+    // Show message
     const showMessage = (type: MessageType, text: string) => {
         setMessage({ type, text });
         setTimeout(() => setMessage(null), 5000);
     };
 
-    // 加载用户列表
+    // Load users list
     const loadUsers = async () => {
         try {
             setLoading(true);
@@ -53,8 +53,8 @@ export function UsersPage() {
                 setTotalPages(res.data.data.pagination.totalPages);
             }
         } catch (error) {
-            console.error('加载用户列表失败:', error);
-            showMessage('error', '加载用户列表失败');
+            console.error('Failed to load users:', error);
+            showMessage('error', 'Failed to load users');
         } finally {
             setLoading(false);
         }
@@ -64,7 +64,7 @@ export function UsersPage() {
         loadUsers();
     }, [page]);
 
-    // 打开创建弹窗
+    // Open create modal
     const handleCreate = () => {
         setModalMode('create');
         setFormData({
@@ -77,31 +77,31 @@ export function UsersPage() {
         setShowModal(true);
     };
 
-    // 打开编辑弹窗
+    // Open edit modal
     const handleEdit = (user: User) => {
         setModalMode('edit');
         setEditingUser(user);
         setFormData({
             email: user.email || '',
             username: user.username || '',
-            password: '', // 编辑时密码为空，只有填写时才更新
+            password: '', // Leave empty to update only when filled
             role: user.role,
             status: user.status,
         });
         setShowModal(true);
     };
 
-    // 提交表单
+    // Submit form
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
         if (!formData.email?.trim() && !formData.username?.trim()) {
-            showMessage('error', '邮箱或用户名至少填写一个');
+            showMessage('error', 'Please provide at least an email or username');
             return;
         }
 
         if (modalMode === 'create' && !formData.password?.trim()) {
-            showMessage('error', '请输入密码');
+            showMessage('error', 'Please enter a password');
             return;
         }
 
@@ -111,11 +111,11 @@ export function UsersPage() {
             if (modalMode === 'create') {
                 const res = await userApi.create(formData);
                 if (res.data.code === 0) {
-                    showMessage('success', '创建成功');
+                    showMessage('success', 'Created successfully');
                     setShowModal(false);
                     loadUsers();
                 } else {
-                    showMessage('error', res.data.message || '创建失败');
+                    showMessage('error', res.data.message || 'Create failed');
                 }
             } else if (editingUser) {
                 const updateData: UpdateUserRequest = {
@@ -127,57 +127,57 @@ export function UsersPage() {
                 };
                 const res = await userApi.update(editingUser.id, updateData);
                 if (res.data.code === 0) {
-                    showMessage('success', '更新成功');
+                    showMessage('success', 'Updated successfully');
                     setShowModal(false);
                     loadUsers();
                 } else {
-                    showMessage('error', res.data.message || '更新失败');
+                    showMessage('error', res.data.message || 'Update failed');
                 }
             }
         } catch (error: unknown) {
             const message = error && typeof error === 'object' && 'response' in error
-                ? (error.response as { data?: { message?: string } })?.data?.message || '操作失败'
-                : '操作失败';
+                ? (error.response as { data?: { message?: string } })?.data?.message || 'Operation failed'
+                : 'Operation failed';
             showMessage('error', message);
         } finally {
             setLoading(false);
         }
     };
 
-    // 删除用户
+    // Delete user
     const handleDelete = async (user: User) => {
         try {
             setLoading(true);
             const res = await userApi.delete(user.id);
             if (res.data.code === 0) {
-                showMessage('success', '删除成功');
+                showMessage('success', 'Deleted successfully');
                 setDeletingUser(null);
                 loadUsers();
             } else {
-                showMessage('error', res.data.message || '删除失败');
+                showMessage('error', res.data.message || 'Delete failed');
             }
         } catch (error: unknown) {
             const message = error && typeof error === 'object' && 'response' in error
-                ? (error.response as { data?: { message?: string } })?.data?.message || '删除失败'
-                : '删除失败';
+                ? (error.response as { data?: { message?: string } })?.data?.message || 'Delete failed'
+                : 'Delete failed';
             showMessage('error', message);
         } finally {
             setLoading(false);
         }
     };
 
-    // 格式化时间
+    // Format time
     const formatTime = (timestamp: number) => {
-        return new Date(timestamp * 1000).toLocaleString('zh-CN');
+        return new Date(timestamp * 1000).toLocaleString('en-US');
     };
 
-    // 角色显示
+    // Role display
     const getRoleBadge = (role: string) => {
         switch (role) {
             case 'admin':
-                return <span className="badge badge-error">管理员</span>;
+                return <span className="badge badge-error">Admin</span>;
             case 'user':
-                return <span className="badge badge-primary">用户</span>;
+                return <span className="badge badge-primary">User</span>;
             default:
                 return <span className="badge">{role}</span>;
         }
@@ -209,15 +209,15 @@ export function UsersPage() {
 
             <div className="flex justify-between items-center mb-6">
                 <div>
-                    <h1 className="text-2xl font-bold">用户管理</h1>
-                    <p className="text-sm text-gray-500 mt-1">共 {total} 个用户</p>
+                    <h1 className="text-2xl font-bold">User Management</h1>
+                    <p className="text-sm text-gray-500 mt-1">Total {total} users</p>
                 </div>
                 <button
                     className="btn btn-primary"
                     onClick={handleCreate}
                     disabled={loading}
                 >
-                    + 添加用户
+                    + Add User
                 </button>
             </div>
 
@@ -227,12 +227,12 @@ export function UsersPage() {
                     <thead>
                     <tr>
                         <th>ID</th>
-                        <th>邮箱</th>
-                        <th>用户名</th>
-                        <th>角色</th>
-                        <th>状态</th>
-                        <th>创建时间</th>
-                        <th>操作</th>
+                        <th>Email</th>
+                        <th>Username</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Created At</th>
+                        <th>Actions</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -245,7 +245,7 @@ export function UsersPage() {
                     ) : users.length === 0 ? (
                         <tr>
                             <td colSpan={7} className="text-center py-8 text-gray-500">
-                                暂无用户
+                                No users found
                             </td>
                         </tr>
                     ) : (
@@ -257,7 +257,7 @@ export function UsersPage() {
                                 <td>{getRoleBadge(user.role)}</td>
                                 <td>
                                         <span className={`badge ${user.status === 0 ? 'badge-success' : 'badge-error'}`}>
-                                            {user.status === 0 ? '正常' : '禁用'}
+                                            {user.status === 0 ? 'Active' : 'Disabled'}
                                         </span>
                                 </td>
                                 <td className="text-sm text-gray-500">
@@ -270,14 +270,14 @@ export function UsersPage() {
                                             onClick={() => handleEdit(user)}
                                             disabled={loading}
                                         >
-                                            编辑
+                                            Edit
                                         </button>
                                         <button
                                             className="btn btn-sm btn-ghost text-error hover:bg-error hover:text-white"
                                             onClick={() => setDeletingUser(user)}
                                             disabled={loading}
                                         >
-                                            删除
+                                            Delete
                                         </button>
                                     </div>
                                 </td>
@@ -300,7 +300,7 @@ export function UsersPage() {
                             «
                         </button>
                         <button className="join-item btn">
-                            第 {page} / {totalPages} 页
+                            Page {page} / {totalPages}
                         </button>
                         <button
                             className="join-item btn"
@@ -317,9 +317,9 @@ export function UsersPage() {
             {deletingUser && (
                 <div className="modal modal-open">
                     <div className="modal-box">
-                        <h3 className="font-bold text-lg mb-4">确认删除</h3>
+                        <h3 className="font-bold text-lg mb-4">Confirm Delete</h3>
                         <p className="py-4">
-                            确定要删除用户 <span className="font-bold">"{deletingUser.email || deletingUser.username}"</span> 吗？
+                            Are you sure you want to delete user <span className="font-bold">"{deletingUser.email || deletingUser.username}"</span>?
                         </p>
                         <div className="modal-action">
                             <button
@@ -327,7 +327,7 @@ export function UsersPage() {
                                 onClick={() => setDeletingUser(null)}
                                 disabled={loading}
                             >
-                                取消
+                                Cancel
                             </button>
                             <button
                                 className="btn btn-error"
@@ -337,10 +337,10 @@ export function UsersPage() {
                                 {loading ? (
                                     <>
                                         <span className="loading loading-spinner loading-sm"></span>
-                                        删除中...
+                                        Deleting...
                                     </>
                                 ) : (
-                                    '确认删除'
+                                    'Confirm Delete'
                                 )}
                             </button>
                         </div>
@@ -354,13 +354,13 @@ export function UsersPage() {
                 <div className="modal modal-open">
                     <div className="modal-box max-w-lg">
                         <h3 className="font-bold text-lg mb-6">
-                            {modalMode === 'create' ? '添加用户' : '编辑用户'}
+                            {modalMode === 'create' ? 'Add User' : 'Edit User'}
                         </h3>
 
                         <form onSubmit={handleSubmit} className="space-y-5">
                             <div className="form-control">
                                 <label className="label">
-                                    <span className="label-text font-medium">邮箱</span>
+                                    <span className="label-text font-medium">Email</span>
                                 </label>
                                 <input
                                     type="email"
@@ -374,7 +374,7 @@ export function UsersPage() {
 
                             <div className="form-control">
                                 <label className="label">
-                                    <span className="label-text font-medium">用户名</span>
+                                    <span className="label-text font-medium">Username</span>
                                 </label>
                                 <input
                                     type="text"
@@ -384,41 +384,41 @@ export function UsersPage() {
                                     onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                                 />
                                 <label className="label">
-                                    <span className="label-text-alt text-gray-500">邮箱或用户名至少填写一个</span>
+                                    <span className="label-text-alt text-gray-500">Provide at least an email or username</span>
                                 </label>
                             </div>
 
                             <div className="form-control">
                                 <label className="label">
                                     <span className="label-text font-medium">
-                                        密码 {modalMode === 'create' && <span className="text-error">*</span>}
+                                        Password {modalMode === 'create' && <span className="text-error">*</span>}
                                     </span>
                                 </label>
                                 <input
                                     type="password"
-                                    placeholder={modalMode === 'edit' ? '留空则不修改' : '请输入密码'}
+                                    placeholder={modalMode === 'edit' ? 'Leave blank to keep unchanged' : 'Enter password'}
                                     className="input input-bordered w-full focus:input-primary"
                                     value={formData.password}
                                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                                 />
                                 {modalMode === 'edit' && (
                                     <label className="label">
-                                        <span className="label-text-alt text-gray-500">留空则不修改密码</span>
+                                        <span className="label-text-alt text-gray-500">Leave blank to keep password unchanged</span>
                                     </label>
                                 )}
                             </div>
 
                             <div className="form-control">
                                 <label className="label">
-                                    <span className="label-text font-medium">角色</span>
+                                    <span className="label-text font-medium">Role</span>
                                 </label>
                                 <select
                                     className="select select-bordered w-full focus:select-primary"
                                     value={formData.role}
                                     onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                                 >
-                                    <option value="user">用户</option>
-                                    <option value="admin">管理员</option>
+                                    <option value="user">User</option>
+                                    <option value="admin">Admin</option>
                                 </select>
                             </div>
 
@@ -436,8 +436,8 @@ export function UsersPage() {
                                         })}
                                     />
                                     <div className="flex flex-col">
-                                        <span className="label-text font-medium">启用该用户</span>
-                                        <span className="label-text-alt text-gray-500">启用后该用户可以正常登录系统</span>
+                                        <span className="label-text font-medium">Enable this user</span>
+                                        <span className="label-text-alt text-gray-500">Enabled users can log in normally</span>
                                     </div>
                                 </label>
                             </div>
@@ -449,7 +449,7 @@ export function UsersPage() {
                                     onClick={() => setShowModal(false)}
                                     disabled={loading}
                                 >
-                                    取消
+                                    Cancel
                                 </button>
                                 <button
                                     type="submit"
@@ -459,10 +459,10 @@ export function UsersPage() {
                                     {loading ? (
                                         <>
                                             <span className="loading loading-spinner loading-sm"></span>
-                                            提交中...
+                                            Submitting...
                                         </>
                                     ) : (
-                                        modalMode === 'create' ? '创建' : '保存'
+                                        modalMode === 'create' ? 'Create' : 'Save'
                                     )}
                                 </button>
                             </div>

@@ -13,7 +13,7 @@
 		"nodejs_compat"
 	],
 	"vars": {
-		"JWT_SECRET": "1234567890Aa..",
+		"JWT_SECRET": "123456",
 		"LANG": "en"
 	},
 	"observability": {

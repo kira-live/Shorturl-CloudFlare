@@ -23,13 +23,13 @@ export function SettingsPage() {
                 setUser(response.data.data);
                 setEmail(response.data.data.email || "");
             } else {
-                setError("获取用户信息失败");
+                setError("Failed to fetch user information");
             }
         } catch (err: unknown) {
             if (axios.isAxiosError(err)) {
-                setError(err.response?.data?.message || "获取用户信息失败");
+                setError(err.response?.data?.message || "Failed to fetch user information");
             } else {
-                setError("获取用户信息失败");
+                setError("Failed to fetch user information");
             }
         } finally {
             setFetching(false);
@@ -48,18 +48,18 @@ export function SettingsPage() {
             });
 
             if (response.data.code === 0) {
-                setMessage("个人信息更新成功");
+                setMessage("Profile updated successfully");
                 if (response.data.data) {
                     setUser(response.data.data);
                 }
             } else {
-                setError(response.data.message || "更新失败");
+                setError(response.data.message || "Update failed");
             }
         } catch (err: unknown) {
             if (axios.isAxiosError(err)) {
-                setError(err.response?.data?.message || "更新个人信息失败,请稍后重试");
+                setError(err.response?.data?.message || "Failed to update profile, please try again later");
             } else {
-                setError("更新个人信息失败,请稍后重试");
+                setError("Failed to update profile, please try again later");
             }
         } finally {
             setLoading(false);
@@ -78,14 +78,14 @@ export function SettingsPage() {
 
     return (
         <div className="container mx-auto p-6">
-            <h1 className="text-2xl font-bold mb-6">个人设置</h1>
+            <h1 className="text-2xl font-bold mb-6">Settings</h1>
             
             <div className="max-w-md">
                 {user && (
                     <div className="mb-6 p-4 bg-base-200 rounded-lg">
-                        <p className="text-sm opacity-70">用户名</p>
-                        <p className="font-semibold">{user.username || "未设置"}</p>
-                        <p className="text-sm opacity-70 mt-2">角色</p>
+                        <p className="text-sm opacity-70">Username</p>
+                        <p className="font-semibold">{user.username || "Not set"}</p>
+                        <p className="text-sm opacity-70 mt-2">Role</p>
                         <p className="font-semibold">{user.role}</p>
                     </div>
                 )}
@@ -105,7 +105,7 @@ export function SettingsPage() {
 
                     <div className="form-control">
                         <label className="label">
-                            <span className="label-text">电子邮箱</span>
+                            <span className="label-text">Email</span>
                         </label>
                         <input
                             type="email"
@@ -121,7 +121,7 @@ export function SettingsPage() {
                         className="btn btn-primary w-full"
                         disabled={loading}
                     >
-                        {loading ? "保存中..." : "保存设置"}
+                        {loading ? "Saving..." : "Save Settings"}
                     </button>
                 </form>
             </div>
