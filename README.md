@@ -62,3 +62,8 @@ Use **Template Resources Management** to upload assets (HTML/CSS/JS/images) for 
 **Public assets**
 - Mark asset as **Public** to enable URL access:
   - `https://<your-domain>/assets/<prefix>/<filename>`
+
+# Image
+![image](https://image.dooo.ng/c/2026/02/24/699d457e04658.png)
+![image](https://image.dooo.ng/c/2026/02/24/699d457dd2090.png)
+![image](https://image.dooo.ng/c/2026/02/24/699d457e02910.png)
