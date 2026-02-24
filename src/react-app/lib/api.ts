@@ -205,7 +205,12 @@ export interface TreeResponse {
     tree: TreeNode[];
     total: number;
 }
-
+export interface UpdateTemplateAssetRequest {
+    filename?: string;
+    is_public?: number;
+    alt_text?: string | null;
+    content_type?: string;
+}
 export interface PrefixInfo {
     asset_prefix: string;
     file_count: number;
@@ -239,7 +244,11 @@ export const templateAssetsApi = {
         api.delete<{ code: number; message: string }>('/api/template-assets/delete-by-prefix', {
             data: { prefix },
         }),
-
+    update: (id: number, data: UpdateTemplateAssetRequest) =>
+        api.put<{ code: number; message: string; data: TemplateAssetListItem }>(
+            `/api/template-assets/update/${id}`,
+            data
+        ),
     // 上传到数据库（< 2MB）
     uploadToDb: (file: File, prefix: string, filename: string, isPublic: number = 0) => {
         const form = new FormData();

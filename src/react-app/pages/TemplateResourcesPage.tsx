@@ -282,10 +282,12 @@ interface TreeViewProps {
     nodes: TreeNode[];
     onDownload: (asset: TemplateAssetListItem) => void;
     onDelete: (asset: TemplateAssetListItem) => void;
+    onCopyUrl: (asset: TemplateAssetListItem) => void;
+    onEdit: (asset: TemplateAssetListItem) => void;
     level?: number;
 }
 
-function TreeView({ nodes, onDownload, onDelete, level = 0 }: TreeViewProps) {
+function TreeView({ nodes, onDownload, onDelete, onCopyUrl, onEdit, level = 0 }: TreeViewProps) {
     const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
     const toggle = (path: string) => {
@@ -333,6 +335,8 @@ function TreeView({ nodes, onDownload, onDelete, level = 0 }: TreeViewProps) {
                                     nodes={node.children}
                                     onDownload={onDownload}
                                     onDelete={onDelete}
+                                    onCopyUrl={onCopyUrl}
+                                    onEdit={onEdit}
                                     level={level + 1}
                                 />
                             )}
@@ -357,6 +361,26 @@ function TreeView({ nodes, onDownload, onDelete, level = 0 }: TreeViewProps) {
                             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
                                 {node.asset && (
                                     <>
+                                        {node.asset.is_public === 1 && (
+                                            <button
+                                                className="btn btn-xs btn-ghost"
+                                                title="Copy public URL"
+                                                onClick={() => onCopyUrl(node.asset!)}
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 17H6a2 2 0 01-2-2V7a2 2 0 012-2h8a2 2 0 012 2v2M16 17h2a2 2 0 002-2v-6a2 2 0 00-2-2h-2m-6 8h6a2 2 0 002-2v-6a2 2 0 00-2-2H10a2 2 0 00-2 2v6a2 2 0 002 2z" />
+                                                </svg>
+                                            </button>
+                                        )}
+                                        <button
+                                            className="btn btn-xs btn-ghost"
+                                            title="Edit"
+                                            onClick={() => onEdit(node.asset!)}
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5h2m-1 0v2m-6 4h12m-9 4h6m-3 4h2M16.5 3.5a2.121 2.121 0 113 3L8 18l-4 1 1-4 11.5-11.5z" />
+                                            </svg>
+                                        </button>
                                         <button
                                             className="btn btn-xs btn-ghost"
                                             title="Download"
@@ -412,6 +436,14 @@ export function TemplateResourcesPage() {
     // 删除整个 prefix
     const [deletingPrefix, setDeletingPrefix] = useState<PrefixInfo | null>(null);
     const [deletePrefixLoading, setDeletePrefixLoading] = useState(false);
+
+    // 编辑资源
+    const [editingAsset, setEditingAsset] = useState<TemplateAssetListItem | null>(null);
+    const [editLoading, setEditLoading] = useState(false);
+    const [editFilename, setEditFilename] = useState("");
+    const [editContentType, setEditContentType] = useState("");
+    const [editIsPublic, setEditIsPublic] = useState(0);
+    const [editAltText, setEditAltText] = useState("");
 
     // 消息
     const [message, setMessage] = useState<Message | null>(null);
@@ -501,6 +533,66 @@ export function TemplateResourcesPage() {
             showMessage("error", "Delete failed");
         } finally {
             setDeleteLoading(false);
+        }
+    };
+
+    // 复制公开资源 URL
+    const handleCopyUrl = async (asset: TemplateAssetListItem) => {
+        if (asset.is_public !== 1) return;
+        try {
+            const cleanFilename = asset.filename.replace(/^\/+/, "");
+            const prefix = (asset as TemplateAssetListItem & { asset_prefix?: string }).asset_prefix || currentPrefix || "";
+            const cleanPrefix = prefix.replace(/^\/+|\/+$/g, "");
+            const base = `${window.location.origin}/assets`;
+            const url = cleanPrefix
+                ? `${base}/${cleanPrefix}/${cleanFilename}`
+                : `${base}/${cleanFilename}`;
+
+            await navigator.clipboard.writeText(url);
+            showMessage("success", "Public URL copied");
+        } catch {
+            showMessage("error", "Failed to copy URL");
+        }
+    };
+
+    // 打开编辑弹窗
+    const openEdit = (asset: TemplateAssetListItem) => {
+        setEditingAsset(asset);
+        setEditFilename(asset.filename || "");
+        setEditContentType(asset.content_type || "");
+        setEditIsPublic(asset.is_public || 0);
+        setEditAltText(asset.alt_text || "");
+    };
+
+    // 提交编辑
+    const handleEditSave = async () => {
+        if (!editingAsset) return;
+        if (!editFilename.trim()) {
+            showMessage("error", "Filename is required");
+            return;
+        }
+        try {
+            setEditLoading(true);
+            const res = await templateAssetsApi.update(editingAsset.id, {
+                filename: editFilename.trim(),
+                content_type: editContentType.trim() || undefined,
+                is_public: editIsPublic,
+                alt_text: editAltText.trim() || null,
+            });
+            if (res.data.code === 0) {
+                showMessage("success", "Asset updated");
+                setEditingAsset(null);
+                if (currentPrefix) loadTree(currentPrefix);
+            } else {
+                showMessage("error", res.data.message);
+            }
+        } catch (error: unknown) {
+            const msg = error && typeof error === "object" && "response" in error
+                ? (error.response as { data?: { message?: string } })?.data?.message || "Update failed"
+                : error instanceof Error ? error.message : "Update failed";
+            showMessage("error", msg);
+        } finally {
+            setEditLoading(false);
         }
     };
 
@@ -682,6 +774,8 @@ export function TemplateResourcesPage() {
                                 nodes={tree}
                                 onDownload={handleDownload}
                                 onDelete={setDeletingAsset}
+                                onCopyUrl={handleCopyUrl}
+                                onEdit={openEdit}
                             />
                         )}
                     </div>
@@ -703,6 +797,96 @@ export function TemplateResourcesPage() {
                     }}
                     showMessage={showMessage}
                 />
+            )}
+
+            {/* Edit modal */}
+            {editingAsset && (
+                <div className="modal modal-open">
+                    <div className="modal-box max-w-lg">
+                        <h3 className="font-bold text-lg mb-4">Edit Asset</h3>
+
+                        <div className="space-y-4">
+                            <div className="form-control">
+                                <label className="label">
+                                    <span className="label-text font-medium">Filename <span className="text-error">*</span></span>
+                                </label>
+                                <input
+                                    type="text"
+                                    className="input input-bordered w-full"
+                                    value={editFilename}
+                                    onChange={(e) => setEditFilename(e.target.value)}
+                                    disabled={editLoading}
+                                />
+                            </div>
+
+                            <div className="form-control">
+                                <label className="label">
+                                    <span className="label-text font-medium">Content-Type</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    className="input input-bordered w-full"
+                                    placeholder="e.g. text/css"
+                                    value={editContentType}
+                                    onChange={(e) => setEditContentType(e.target.value)}
+                                    disabled={editLoading}
+                                />
+                            </div>
+
+                            <div className="form-control">
+                                <label className="label">
+                                    <span className="label-text font-medium">Alt Text</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    className="input input-bordered w-full"
+                                    placeholder="Optional description"
+                                    value={editAltText}
+                                    onChange={(e) => setEditAltText(e.target.value)}
+                                    disabled={editLoading}
+                                />
+                            </div>
+
+                            <div className="form-control">
+                                <label className="label cursor-pointer justify-start gap-3">
+                                    <input
+                                        type="checkbox"
+                                        className="checkbox checkbox-primary"
+                                        checked={editIsPublic === 1}
+                                        onChange={(e) => setEditIsPublic(e.target.checked ? 1 : 0)}
+                                        disabled={editLoading}
+                                    />
+                                    <span className="label-text">Public Access</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div className="modal-action">
+                            <button
+                                className="btn btn-ghost"
+                                onClick={() => setEditingAsset(null)}
+                                disabled={editLoading}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                className="btn btn-primary"
+                                onClick={handleEditSave}
+                                disabled={editLoading}
+                            >
+                                {editLoading ? (
+                                    <>
+                                        <span className="loading loading-spinner loading-sm" />
+                                        Saving...
+                                    </>
+                                ) : (
+                                    "Save"
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                    <div className="modal-backdrop" onClick={() => !editLoading && setEditingAsset(null)} />
+                </div>
             )}
 
             {/* Delete confirmation modal */}

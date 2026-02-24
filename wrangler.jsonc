@@ -31,7 +31,7 @@
 		{
 			"binding": "shorturl",
 			"database_name": "shorturl",
-			"database_id": "4df9db99-ae6c-474f-8b67-25e1e5c218fe"
+			"database_id": "d01e45ae-11d1-4966-9b39-02f686c2b6d6"
 		}
 	],
 	"r2_buckets": [
@@ -39,7 +39,7 @@
 			"binding": "R2_BUCKET",
 			"bucket_name": "shorturl"
 		}
-		]
+	]
 	/**
 	 * Smart Placement
 	 * https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement
